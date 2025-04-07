@@ -1,0 +1,8 @@
+name: Database Migrations with Flyway
+
+on:
+  push:
+    branches:
+      - "main" 
+    paths:
+      - 'migrations/**'  # Trigger only when changes occur in the migrations folder
