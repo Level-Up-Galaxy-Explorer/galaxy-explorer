@@ -2,7 +2,25 @@ name: Database Migrations with Flyway
 
 on:
   push:
-    branches:
-      - "main" 
+    branches: [ "main" ]
     paths:
-      - 'migrations/**'  # Trigger only when changes occur in the migrations folder
+      - 'migrations/**'
+
+jobs:
+  FlywayMigration:
+    name: Run Flyway Migrations
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Execute Flyway Migrations
+        run: |
+          docker run --rm \
+            --volume ${GITHUB_WORKSPACE}/migrations:/flyway/sql:ro \
+            redgate/flyway \
+            -url="${{ secrets.DATABASE_URL }}" \
+            -user="${{ secrets.DB_USERNAME }}" \
+            -password="${{ secrets.DB_PASSWORD }}" \
+            migrate
