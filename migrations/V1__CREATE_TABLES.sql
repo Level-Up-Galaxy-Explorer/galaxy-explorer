@@ -49,9 +49,16 @@ CREATE TABLE Status (
     description VARCHAR(255)
 );
 
+CREATE TABLE Mission_Type (
+    mission_type_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255)
+);
+
 CREATE TABLE Missions (
     mission_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
+    mission_type_id INT NOT NULL REFERENCES Mission_Type(mission_type_id),
     launch_date TIMESTAMP NOT NULL,
     destination_planet_id INT NOT NULL REFERENCES Planets(planet_id),
     status_id INT NOT NULL REFERENCES Status(status_id),
