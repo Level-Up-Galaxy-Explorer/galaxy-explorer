@@ -35,3 +35,4 @@ INSERT INTO Status (name, description) VALUES
 ('Launched', 'Mission has launched'),
 ('Completed', 'Mission successfully completed'),
 ('Aborted', 'Mission was canceled or failed');
+
