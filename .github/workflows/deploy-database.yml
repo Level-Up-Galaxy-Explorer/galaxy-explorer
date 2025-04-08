@@ -1,7 +1,0 @@
-name: Deploy Database
-
-on:
-  workflow_dispatch:  # Manual trigger for deployment
-
-permissions:
-  contents: read  
