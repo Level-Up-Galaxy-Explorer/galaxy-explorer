@@ -24,7 +24,7 @@ namespace galaxy_api.Repositories
                     p.has_life,
                     p.coordinates
                 FROM planets p
-                JOIN galaxies g ON p.galaxy_id = g.galaxy_id
+                JOIN galaxy g ON p.galaxy_id = g.galaxy_id
                 JOIN planet_type pt ON p.planet_type_id = pt.planet_type_id";
 
             await using var conn = new NpgsqlConnection(_connectionString);

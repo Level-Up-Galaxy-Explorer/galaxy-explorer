@@ -4,7 +4,7 @@ CREATE TABLE Galaxy_Type (
     description VARCHAR(255)
 );
 
-CREATE TABLE Galaxies (
+CREATE TABLE Galaxy (
     galaxy_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     galaxy_type_id INT REFERENCES Galaxy_Type(galaxy_type_id),
@@ -21,7 +21,7 @@ CREATE TABLE Planet_Type (
 CREATE TABLE Planets (
     planet_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    galaxy_id INT NOT NULL REFERENCES Galaxies(galaxy_id),
+    galaxy_id INT NOT NULL REFERENCES Galaxy(galaxy_id),
     planet_type_id INT REFERENCES Planet_Type(planet_type_id),
     has_life BOOLEAN NOT NULL,
     coordinates VARCHAR(64)

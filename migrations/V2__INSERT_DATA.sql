@@ -3,7 +3,7 @@ INSERT INTO Galaxy_Type (name, description) VALUES
 ('Elliptical', 'A smooth, featureless elliptical shape'),
 ('Irregular', 'A galaxy with no distinct shape');
 
-INSERT INTO Galaxies (name, galaxy_type_id, distance_from_earth, description) VALUES
+INSERT INTO Galaxy (name, galaxy_type_id, distance_from_earth, description) VALUES
 ('Milky Way', 1, 0, 'Our home galaxy'),
 ('Andromeda', 1, 2537000, 'Nearest major spiral galaxy to the Milky Way'),
 ('Sombrero Galaxy', 2, 29000000, 'Bright galaxy with a large central bulge'),
