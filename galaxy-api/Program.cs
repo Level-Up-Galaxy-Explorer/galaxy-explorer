@@ -8,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<IPlanetRepository, PlanetRepository>();
 builder.Services.AddScoped<IPlanetService, PlanetService>();
 
+builder.Services.AddScoped<ICrewsRepositoty, CrewsRepository>();
+builder.Services.AddScoped<ICrewsService, CrewsService>();
+
 
 builder.Services.AddControllers();
 
