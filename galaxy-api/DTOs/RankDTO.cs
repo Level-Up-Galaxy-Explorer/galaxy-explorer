@@ -1,0 +1,8 @@
+namespace galaxy_api.DTOs;
+
+public class RankDTO {
+    public int Rank_Id {get; set;}
+    public required string Title {get; set;}
+
+    public string Description {get; set;} = string.Empty;
+}
