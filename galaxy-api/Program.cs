@@ -11,6 +11,12 @@ builder.Services.AddScoped<IPlanetService, PlanetService>();
 builder.Services.AddScoped<IGalaxyRepository, GalaxyRepository>();
 builder.Services.AddScoped<IGalaxyService, GalaxyService>();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IMissionRepository, MissionRepository>();
+builder.Services.AddScoped<IMissionService, MissionService>();
+
 
 builder.Services.AddControllers();
 
