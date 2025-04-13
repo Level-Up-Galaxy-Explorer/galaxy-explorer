@@ -17,6 +17,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IMissionRepository, MissionRepository>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 
+builder.Services.AddScoped<ICrewsRepositoty, CrewsRepository>();
+builder.Services.AddScoped<ICrewsService, CrewsService>();
+
 
 builder.Services.AddControllers();
 
