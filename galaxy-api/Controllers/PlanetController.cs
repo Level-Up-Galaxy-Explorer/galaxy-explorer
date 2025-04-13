@@ -1,5 +1,5 @@
 ﻿using galaxy_api.Models;
-using galaxy_api.Repositories;
+using galaxy_api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,17 +10,17 @@ namespace galaxy_api.Controllers
     [Route("api/[controller]")]
     public class PlanetController : ControllerBase
     {
-        private readonly IPlanetRepository _planetRepository;
+        private readonly IPlanetService _planetService;
 
-        public PlanetController(IPlanetRepository planetRepository)
+        public PlanetController(IPlanetService planetService)
         {
-            _planetRepository = planetRepository;
+            _planetService = planetService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Planet>>> GetAllPlanets()
         {
-            var planets = await _planetRepository.GetAllPlanetsAsync();
+            var planets = await _planetService.GetAllPlanetsAsync();
             return Ok(planets);
         }
 
@@ -34,7 +34,7 @@ namespace galaxy_api.Controllers
 
             try
             {
-                var createdPlanet = await _planetRepository.AddPlanetAsync(planet);
+                var createdPlanet = await _planetService.AddPlanetAsync(planet);
                 return CreatedAtAction(nameof(GetAllPlanets), createdPlanet);
             }
             catch (Exception ex)
@@ -53,7 +53,7 @@ namespace galaxy_api.Controllers
 
             try
             {
-                var success = await _planetRepository.UpdatePlanetAsync(id, planet);
+                var success = await _planetService.UpdatePlanetAsync(id, planet);
                 if (!success)
                 {
                     return NotFound();

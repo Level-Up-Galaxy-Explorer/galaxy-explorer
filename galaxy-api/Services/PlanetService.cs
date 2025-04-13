@@ -15,10 +15,10 @@ namespace galaxy_api.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<PlanetDTO>> GetAllPlanetsAsync()
+        public async Task<IEnumerable<Planet>> GetAllPlanetsAsync()
         {
             var planets = await _repository.GetAllPlanetsAsync();
-            return planets.Select(p => new PlanetDTO
+            return planets.Select(p => new Planet
             {
                 Name = p.Name,
                 Galaxy = p.Galaxy,
@@ -28,7 +28,7 @@ namespace galaxy_api.Services
             });
         }
 
-        public async Task<PlanetDTO> AddPlanetAsync(PlanetDTO planetDto)
+        public async Task<Planet> AddPlanetAsync(Planet planetDto)
         {
             var planet = new Planet
             {
@@ -40,7 +40,7 @@ namespace galaxy_api.Services
             };
 
             var createdPlanet = await _repository.AddPlanetAsync(planet);
-            return new PlanetDTO
+            return new Planet
             {
                 Name = createdPlanet.Name,
                 Galaxy = createdPlanet.Galaxy,
@@ -50,7 +50,7 @@ namespace galaxy_api.Services
             };
         }
 
-        public async Task<bool> UpdatePlanetAsync(int planetId, PlanetDTO planetDto)
+        public async Task<bool> UpdatePlanetAsync(int planetId, Planet planetDto)
         {
             var planet = new Planet
             {
