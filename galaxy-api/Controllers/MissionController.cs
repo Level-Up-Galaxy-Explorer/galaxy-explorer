@@ -1,4 +1,5 @@
 using galaxy_api.DTOs;
+using galaxy_api.Helpers;
 using galaxy_api.Models;
 using galaxy_api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -17,50 +18,86 @@ namespace galaxy_api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllMissions()
+        public async Task<ActionResult<ApiResponse<IEnumerable<Missions>>>> GetAllMissions()
         {
             var missions = await _missionService.GetAllMissionsAsync();
-            return Ok(missions);
+            return Ok(new ApiResponse<IEnumerable<Missions>>
+            {
+                Success = true,
+                Message = $"Retrieved {missions.Count()} missions.",
+                Data = missions
+            });
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetMissionById(int id)
+        public async Task<ActionResult<ApiResponse<Missions>>> GetMissionById(int id)
         {
             var mission = await _missionService.GetMissionByIdAsync(id);
             if (mission == null)
-                return NotFound();
+            {
+                return NotFound(new ApiResponse<Missions>
+                {
+                    Success = false,
+                    Message = $"No mission found with ID {id}",
+                    Data = null
+                });
+            }
 
-            return Ok(mission);
+            return Ok(new ApiResponse<Missions>
+            {
+                Success = true,
+                Message = "Mission retrieved successfully",
+                Data = mission
+            });
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateMission([FromBody] Missions mission)
+        public async Task<ActionResult<ApiResponse<Missions>>> CreateMission([FromBody] Missions mission)
         {
             mission.Status_Id = 1;
             await _missionService.CreateMissionAsync(mission);
-            return CreatedAtAction(nameof(GetMissionById), new { id = mission.Mission_Id }, mission);
+            return CreatedAtAction(nameof(GetMissionById), new { id = mission.Mission_Id }, new ApiResponse<Missions>
+            {
+                Success = true,
+                Message = "Mission created successfully",
+                Data = mission
+            });
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMissionDetails(int id, [FromBody] Missions mission)
+        public async Task<ActionResult<ApiResponse<string>>> UpdateMissionDetails(int id, [FromBody] Missions mission)
         {
             await _missionService.UpdateMissionDetailsAsync(id, mission);
-            return NoContent();
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = "Mission details updated successfully",
+                Data = null
+            });
         }
 
-       [HttpPatch("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] MissionStatusUpdateDto dto)
+        [HttpPatch("{id}/status")]
+        public async Task<ActionResult<ApiResponse<string>>> UpdateStatus(int id, [FromBody] MissionStatusUpdateDto dto)
         {
             var existingMission = await _missionService.GetMissionByIdAsync(id);
             if (existingMission == null)
             {
-                return NotFound(new { error = "Mission not found." });
+                return NotFound(new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Mission not found.",
+                    Data = null
+                });
             }
-
 
             if (dto.Status_Id == 3 && existingMission.Status_Id != 2)
             {
-                return BadRequest(new { error = "Mission can only be marked as Completed if it is currently Launched." });
+                return BadRequest(new ApiResponse<string>
+                {
+                    Success = false,
+                    Message = "Mission can only be marked as Completed if it is currently Launched.",
+                    Data = null
+                });
             }
 
             var mission = new Missions
@@ -70,38 +107,73 @@ namespace galaxy_api.Controllers
                 Reward_Credit = dto.Reward_Credit ?? string.Empty
             };
 
-            if (dto.Status_Id == 3) 
+            if (dto.Status_Id == 3)
             {
                 if (string.IsNullOrWhiteSpace(dto.Feedback))
                 {
-                    return BadRequest(new { error = "Feedback is required when marking a mission as Completed." });
+                    return BadRequest(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Feedback is required when marking a mission as Completed.",
+                        Data = null
+                    });
                 }
 
                 if (string.IsNullOrWhiteSpace(dto.Reward_Credit))
                 {
-                    return BadRequest(new { error = "Reward credit is required when marking a mission as Completed." });
+                    return BadRequest(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Reward credit is required when marking a mission as Completed.",
+                        Data = null
+                    });
                 }
 
                 await _missionService.UpdateMissionStatusAsync(id, mission);
                 await _missionService.ProvideMissionFeedbackAsync(id, mission);
                 await _missionService.RewardCreditMissionAsync(id, mission);
             }
-            else if (dto.Status_Id == 4) 
+            else if (dto.Status_Id == 4)
             {
                 if (string.IsNullOrWhiteSpace(dto.Feedback))
                 {
-                    return BadRequest(new { error = "Feedback is required when marking a mission as Aborted." });
+                    return BadRequest(new ApiResponse<string>
+                    {
+                        Success = false,
+                        Message = "Feedback is required when marking a mission as Aborted.",
+                        Data = null
+                    });
                 }
 
                 await _missionService.UpdateMissionStatusAsync(id, mission);
                 await _missionService.ProvideMissionFeedbackAsync(id, mission);
             }
-            else 
+            else
             {
                 await _missionService.UpdateMissionStatusAsync(id, mission);
             }
 
-            return NoContent();
+            return Ok(new ApiResponse<string>
+            {
+                Success = true,
+                Message = "Mission status updated successfully",
+                Data = null
+            });
+        }
+
+        [HttpGet("report")]
+        public async Task<ActionResult<ApiResponse<object>>> GetMissionStatusReport(
+            [FromQuery] string? missionType,
+            [FromQuery] string? status,
+            [FromQuery] string? groupBy) // "month" or "quarter"
+        {
+            var report = await _missionService.GetMissionStatusReportAsync(missionType, status, groupBy);
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Mission status report generated successfully",
+                Data = report
+            });
         }
     }
 }

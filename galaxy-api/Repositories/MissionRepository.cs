@@ -1,4 +1,5 @@
 using Dapper;
+using galaxy_api.DTOs;
 using galaxy_api.Models;
 using Npgsql;
 
@@ -161,6 +162,54 @@ namespace galaxy_api.Repositories
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.ExecuteAsync(query, parameters);
         }
+        public async Task<IEnumerable<MissionStatusReport>> GetMissionStatusReportAsync(string? missionType, string? status, string? groupBy)
+        {
+            var filterClauses = new List<string>();
+            if (!string.IsNullOrWhiteSpace(missionType))
+            filterClauses.Add("mt.name ILIKE @MissionType");
+            if (!string.IsNullOrWhiteSpace(status))
+            filterClauses.Add("s.name ILIKE @Status");
 
+            var whereClause = filterClauses.Any()
+            ? "WHERE " + string.Join(" AND ", filterClauses)
+            : string.Empty;
+
+            string periodSelect = string.Empty;
+            string periodGroup = string.Empty;
+
+            if (groupBy?.ToLower() == "month")
+            {
+                periodSelect = "TO_CHAR(m.launch_date, 'YYYY-MM') AS Period,";
+                periodGroup = "TO_CHAR(m.launch_date, 'YYYY-MM'),";
+            }
+            else if (groupBy?.ToLower() == "quarter")
+            {
+                periodSelect = "CONCAT('Q', EXTRACT(QUARTER FROM m.launch_date), '-', EXTRACT(YEAR FROM m.launch_date)) AS Period,";
+                periodGroup = "EXTRACT(QUARTER FROM m.launch_date), EXTRACT(YEAR FROM m.launch_date),";
+            }
+
+            var query = $@"
+                SELECT 
+                    mt.name AS MissionType,
+                    s.name AS Status,
+                    COUNT(*) AS Count,
+                    {periodSelect.TrimEnd(',')}
+                    NULL AS DummyToPreventSyntaxError
+                FROM missions m
+                JOIN mission_type mt ON m.mission_type_id = mt.mission_type_id
+                JOIN status s ON m.status_id = s.status_id
+                {whereClause}
+                GROUP BY {periodGroup} mt.name, s.name
+                ORDER BY mt.name, s.name";
+
+            var parameters = new
+            {
+                MissionType = missionType,
+                Status = status
+            };
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            return await conn.QueryAsync<MissionStatusReport>(query, parameters);
+        }
     }
 }

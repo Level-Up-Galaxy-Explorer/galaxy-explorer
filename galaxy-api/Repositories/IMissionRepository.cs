@@ -1,3 +1,4 @@
+using galaxy_api.DTOs;
 using galaxy_api.Models;
 
 namespace galaxy_api.Repositories
@@ -12,6 +13,8 @@ namespace galaxy_api.Repositories
         Task UpdateMissionStatusAsync(int id, Missions missions);
 
         Task RewardCreditMissionAsync(int id, Missions missions);
+        Task<IEnumerable<MissionStatusReport>> GetMissionStatusReportAsync(string? missionType, string? status, string? groupBy);
+
 
 
     }

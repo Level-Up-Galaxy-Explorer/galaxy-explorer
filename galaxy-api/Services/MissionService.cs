@@ -1,3 +1,4 @@
+using galaxy_api.DTOs;
 using galaxy_api.Models;
 using galaxy_api.Repositories;
 
@@ -48,5 +49,17 @@ namespace galaxy_api.Services
         {
             await _repository.RewardCreditMissionAsync(id, missions);
         }
+        public async Task<IEnumerable<MissionStatusReport>> GetMissionStatusReportAsync(string? missionType, string? status, string? groupBy)
+        {
+            var data = await _repository.GetMissionStatusReportAsync(missionType, status, groupBy);
+
+            return groupBy?.ToLower() switch
+            {
+                "month" => data.OrderBy(r => r.Period).ThenBy(r => r.MissionType),
+                "quarter" => data.OrderBy(r => r.Period).ThenBy(r => r.MissionType),
+                _ => data.OrderBy(r => r.MissionType).ThenBy(r => r.Status)
+            };
+        }
+
     }
 }
