@@ -16,4 +16,9 @@ class CrewsService : ICrewsService
     {
         return await _repository.GetAllCrewsAsync();
     }
+
+    public async Task<CrewDTO?> GetCrewAsync(int crew_id)
+    {
+        return await _repository.GetCrewAsync(crew_id);
+    }
 }

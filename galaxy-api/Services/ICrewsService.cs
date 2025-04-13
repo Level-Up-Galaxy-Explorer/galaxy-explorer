@@ -6,4 +6,6 @@ public interface ICrewsService
 {
 
     Task<IEnumerable<CrewDTO>> GetAllCrewsAsync();
+
+    Task<CrewDTO?> GetCrewAsync(int crew_id);
 }

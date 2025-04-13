@@ -16,10 +16,22 @@ public class CrewsController : ControllerBase
     }
 
     [HttpGet]
-        public async Task<ActionResult<IEnumerable<CrewDTO>>> GetCrews()
-        {
-            var crews = await _crewsService.GetAllCrewsAsync();
-            return Ok(crews);
+    public async Task<ActionResult<IEnumerable<CrewDTO>>> GetCrews()
+    {
+        var crews = await _crewsService.GetAllCrewsAsync();
+        return Ok(crews);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<CrewDTO>>> GetCrew(int id)
+    {
+        var crew = await _crewsService.GetCrewAsync(id);
+
+        if (crew == null) {
+            return NotFound();
         }
+
+        return Ok(crew);
+    }
 
 }
