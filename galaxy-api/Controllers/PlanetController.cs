@@ -1,7 +1,9 @@
-﻿using galaxy_api.Models;
+﻿using galaxy_api.DTOs;
+using galaxy_api.Models;
 using galaxy_api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace galaxy_api.Controllers
@@ -18,52 +20,69 @@ namespace galaxy_api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Planet>>> GetAllPlanets()
+        public async Task<ActionResult<IEnumerable<PlanetDTO>>> GetAllPlanets()
         {
             var planets = await _planetService.GetAllPlanetsAsync();
+            if (planets == null || !planets.Any())
+            {
+                return NotFound(new { Message = "No planets found." });
+            }
+            return Ok(planets);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<PlanetDTO>> GetPlanet(int id)
+        {
+            var planet = await _planetService.GetPlanetAsync(id);
+            if (planet == null)
+            {
+                return NotFound(new { Message = $"Planet with ID {id} not found." });
+            }
+            return Ok(planet);
+        }
+
+        [HttpGet("search/{name}")]
+        public async Task<ActionResult<IEnumerable<PlanetDTO>>> SearchPlanets(string name)
+        {
+            var planets = await _planetService.SearchPlanetsAsync(name);
+            if (planets == null || !planets.Any())
+            {
+                return NotFound(new { Message = $"No planets found with the name '{name}'." });
+            }
             return Ok(planets);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Planet>> CreatePlanet(Planet planet)
+        public async Task<ActionResult<PlanetDTO>> CreatePlanet([FromBody] PlanetDTO planetDto)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { Message = "Invalid planet data provided.", Errors = ModelState });
             }
 
-            try
+            var createdPlanet = await _planetService.AddPlanetAsync(planetDto);
+            return CreatedAtAction(nameof(GetAllPlanets), createdPlanet, new
             {
-                var createdPlanet = await _planetService.AddPlanetAsync(planet);
-                return CreatedAtAction(nameof(GetAllPlanets), createdPlanet);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while creating the planet");
-            }
+                Message = "Planet created successfully.",
+                Planet = createdPlanet
+            });
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdatePlanet(int id, Planet planet)
+        public async Task<IActionResult> UpdatePlanet(int id, [FromBody] PlanetDTO planetDto)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new { Message = "Invalid planet data provided.", Errors = ModelState });
             }
 
-            try
+            var success = await _planetService.UpdatePlanetAsync(id, planetDto);
+            if (!success)
             {
-                var success = await _planetService.UpdatePlanetAsync(id, planet);
-                if (!success)
-                {
-                    return NotFound();
-                }
-                return NoContent();
+                return NotFound(new { Message = $"Planet with ID {id} not found." });
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An error occurred while updating the planet");
-            }
+
+            return Ok(new { Message = "Planet updated successfully." });
         }
     }
 }

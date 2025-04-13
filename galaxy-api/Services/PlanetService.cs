@@ -2,6 +2,7 @@
 using galaxy_api.Models;
 using galaxy_api.Repositories;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace galaxy_api.Services
@@ -15,52 +16,57 @@ namespace galaxy_api.Services
             _repository = repository;
         }
 
-        public async Task<IEnumerable<Planet>> GetAllPlanetsAsync()
+        public async Task<IEnumerable<PlanetDTO>> GetAllPlanetsAsync()
         {
             var planets = await _repository.GetAllPlanetsAsync();
-            return planets.Select(p => new Planet
-            {
-                Name = p.Name,
-                Galaxy = p.Galaxy,
-                PlanetType = p.PlanetType,
-                HasLife = p.HasLife,
-                Coordinates = p.Coordinates
-            });
+            return planets.Select(MapToDTO);
         }
 
-        public async Task<Planet> AddPlanetAsync(Planet planetDto)
+        public async Task<PlanetDTO> AddPlanetAsync(PlanetDTO planetDto)
         {
-            var planet = new Planet
-            {
-                Name = planetDto.Name,
-                Galaxy = planetDto.Galaxy,
-                PlanetType = planetDto.PlanetType,
-                HasLife = planetDto.HasLife,
-                Coordinates = planetDto.Coordinates
-            };
-
+            var planet = MapToEntity(planetDto);
             var createdPlanet = await _repository.AddPlanetAsync(planet);
+            return MapToDTO(createdPlanet);
+        }
+        public async Task<PlanetDTO?> GetPlanetAsync(int id)
+        {
+            var planet = await _repository.GetPlanetByIdAsync(id);
+            return planet != null ? MapToDTO(planet) : null;
+        }
+        public async Task<IEnumerable<PlanetDTO>> SearchPlanetsAsync(string name)
+        {
+            var planets = await _repository.SearchPlanetsAsync(name);
+            return planets.Select(MapToDTO);
+        }
+
+        public async Task<bool> UpdatePlanetAsync(int planetId, PlanetDTO planetDto)
+        {
+            var planet = MapToEntity(planetDto);
+            return await _repository.UpdatePlanetAsync(planetId, planet);
+        }
+
+        private PlanetDTO MapToDTO(Planet planet)
+        {
+            return new PlanetDTO
+            {
+                Name = planet.Name,
+                Galaxy = planet.Galaxy,
+                PlanetType = planet.PlanetType,
+                HasLife = planet.HasLife,
+                Coordinates = planet.Coordinates
+            };
+        }
+
+        private Planet MapToEntity(PlanetDTO planetDto)
+        {
             return new Planet
             {
-                Name = createdPlanet.Name,
-                Galaxy = createdPlanet.Galaxy,
-                PlanetType = createdPlanet.PlanetType,
-                HasLife = createdPlanet.HasLife,
-                Coordinates = createdPlanet.Coordinates
-            };
-        }
-
-        public async Task<bool> UpdatePlanetAsync(int planetId, Planet planetDto)
-        {
-            var planet = new Planet
-            {
                 Name = planetDto.Name,
                 Galaxy = planetDto.Galaxy,
                 PlanetType = planetDto.PlanetType,
                 HasLife = planetDto.HasLife,
                 Coordinates = planetDto.Coordinates
             };
-            return await _repository.UpdatePlanetAsync(planetId, planet);
         }
     }
 }

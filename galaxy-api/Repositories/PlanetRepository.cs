@@ -17,12 +17,11 @@ namespace galaxy_api.Repositories
         public async Task<IEnumerable<Planet>> GetAllPlanetsAsync()
         {
             var planets = new List<Planet>();
-            
             var query = @"SELECT p.name, g.name as galaxy, pt.name as planet_type, 
-                         p.has_life, p.coordinates 
-                         FROM planets p
-                         JOIN galaxy g ON p.galaxy_id = g.galaxy_id
-                         JOIN planet_type pt ON p.planet_type_id = pt.planet_type_id";
+                          p.has_life, p.coordinates 
+                          FROM planets p
+                          JOIN galaxy g ON p.galaxy_id = g.galaxy_id
+                          JOIN planet_type pt ON p.planet_type_id = pt.planet_type_id";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -45,18 +44,81 @@ namespace galaxy_api.Repositories
             return planets;
         }
 
+        public async Task<Planet?> GetPlanetByIdAsync(int id)
+        {
+            var query = @"SELECT p.name, g.name as galaxy, pt.name as planet_type, 
+                          p.has_life, p.coordinates 
+                          FROM planets p
+                          JOIN galaxy g ON p.galaxy_id = g.galaxy_id
+                          JOIN planet_type pt ON p.planet_type_id = pt.planet_type_id
+                          WHERE p.planet_id = @planetId";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@planetId", id);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                return new Planet
+                {
+                    Name = reader.GetString(0),
+                    Galaxy = reader.GetString(1),
+                    PlanetType = reader.GetString(2),
+                    HasLife = reader.GetBoolean(3),
+                    Coordinates = reader.GetString(4)
+                };
+            }
+
+            return null;
+        }
+
+        public async Task<IEnumerable<Planet>> SearchPlanetsAsync(string name)
+        {
+            var planets = new List<Planet>();
+            var query = @"SELECT p.name, g.name as galaxy, pt.name as planet_type, 
+                          p.has_life, p.coordinates 
+                          FROM planets p
+                          JOIN galaxy g ON p.galaxy_id = g.galaxy_id
+                          JOIN planet_type pt ON p.planet_type_id = pt.planet_type_id
+                          WHERE LOWER(p.name) LIKE LOWER(@name)";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@name", $"%{name}%");
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                planets.Add(new Planet
+                {
+                    Name = reader.GetString(0),
+                    Galaxy = reader.GetString(1),
+                    PlanetType = reader.GetString(2),
+                    HasLife = reader.GetBoolean(3),
+                    Coordinates = reader.GetString(4)
+                });
+            }
+
+            return planets;
+        }
+
         public async Task<Planet> AddPlanetAsync(Planet planet)
         {
             var query = @"INSERT INTO planets (name, galaxy_id, planet_type_id, has_life, coordinates)
-                        VALUES (@name, 
-                               (SELECT galaxy_id FROM galaxy WHERE name = @galaxy),
-                               (SELECT planet_type_id FROM planet_type WHERE name = @planetType),
-                               @hasLife, @coordinates)
-                        RETURNING name, 
-                                 (SELECT name FROM galaxy WHERE galaxy_id = planets.galaxy_id) as galaxy,
-                                 (SELECT name FROM planet_type WHERE planet_type_id = planets.planet_type_id) as planet_type,
-                                 has_life,
-                                 coordinates";
+                          VALUES (@name, 
+                                 (SELECT galaxy_id FROM galaxy WHERE name = @galaxy),
+                                 (SELECT planet_type_id FROM planet_type WHERE name = @planetType),
+                                 @hasLife, @coordinates)
+                          RETURNING name, 
+                                   (SELECT name FROM galaxy WHERE galaxy_id = planets.galaxy_id) as galaxy,
+                                   (SELECT name FROM planet_type WHERE planet_type_id = planets.planet_type_id) as planet_type,
+                                   has_life,
+                                   coordinates";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -81,7 +143,7 @@ namespace galaxy_api.Repositories
                 };
             }
 
-            throw new Exception("Planet creation failed.");
+            throw new Exception("Failed to create the planet.");
         }
 
         public async Task<bool> UpdatePlanetAsync(int planetId, Planet planet)
@@ -117,8 +179,8 @@ namespace galaxy_api.Repositories
             }
 
             var query = $@"UPDATE planets
-                         SET {string.Join(", ", setClause)}
-                         WHERE planet_id = @planetId";
+                           SET {string.Join(", ", setClause)}
+                           WHERE planet_id = @planetId";
 
             parameters.Add(new NpgsqlParameter("@planetId", planetId));
 
