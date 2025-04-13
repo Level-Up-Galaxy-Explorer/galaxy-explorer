@@ -24,6 +24,7 @@ INSERT INTO Planets (name, galaxy_id, planet_type_id, has_life, coordinates) VAL
 ('Pluto', 1, 4, FALSE, 'RA: 19h Dec: -16°');
 
 INSERT INTO Rank (title, description) VALUES
+('Director', 'Assigns missions, crew and oversees the whole organization'),
 ('Commander', 'Leads missions and oversees strategy'),
 ('Pilot', 'Navigates and flies spacecraft'),
 ('Engineer', 'Maintains and repairs technical systems'),
@@ -36,3 +37,9 @@ INSERT INTO Status (name, description) VALUES
 ('Completed', 'Mission successfully completed'),
 ('Aborted', 'Mission was canceled or failed');
 
+INSERT INTO Mission_Type (name, description) VALUES
+('Exploration', 'Investigating new planets and galaxies'),
+('Colonization', 'Establishing colonies on habitable planets'),
+('Research', 'Conducting scientific experiments and studies'),
+('Rescue', 'Emergency missions to retrieve crew or equipment'),
+('Supply', 'Delivering essential resources to established bases');
