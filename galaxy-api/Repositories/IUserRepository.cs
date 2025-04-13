@@ -6,6 +6,7 @@ namespace galaxy_api.Repositories
     {
         Task<IEnumerable<Users>> GetAllUserAsync();
         Task<Users?> GetUserByIdAsync(int id);
+        Task<Users?> GetUserByGoogleIdAsync(string id);
         Task AddUserAsync(Users users);
         Task UpdateUserDetailsAsync(int id, Users users);
         Task AssignUserAsync(int id, Users users);
