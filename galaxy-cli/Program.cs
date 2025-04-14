@@ -3,7 +3,11 @@ using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
+using galaxy_cli.Services;
+using galaxy_cli.Services.Base;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Spectre.Console.Cli;
 
 namespace galaxy_cli;
@@ -12,8 +16,8 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-
-        var services = ConfigureServices();
+        var configuration = BuildConfiguration();
+        var services = ConfigureServices(configuration);
 
         var app = RegisterCommands(services);
 
@@ -28,24 +32,30 @@ class Program
             return 0;
         }
     }
-
-
-    private static ServiceProvider ConfigureServices()
+    private static IConfiguration BuildConfiguration()
     {
-        var serviceCollection = new ServiceCollection();
-
-        serviceCollection.AddHttpClient();
-
-        return serviceCollection.BuildServiceProvider();
+        IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", false, true);
+        return builder.Build();
     }
 
-    private static CommandApp RegisterCommands(ServiceProvider serviceProvider)
+    private static ServiceCollection ConfigureServices(IConfiguration configuration)
     {
-        var services = new ServiceCollection();
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddHttpClient();
+        serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
+        serviceCollection.AddSingleton(resolver => resolver.GetRequiredService<IOptions<ApiSettings>>().Value);
+        serviceCollection.AddTransient<CrewListCommand>();
 
-        services.AddHttpClient();
+        serviceCollection.AddTransient<ICrewsService, CrewsService>();
 
-        var registrar = new TypeRegistrar(services);
+
+
+        return serviceCollection;
+    }
+
+    private static CommandApp RegisterCommands(ServiceCollection serviceProvider)
+    {
+        var registrar = new TypeRegistrar(serviceProvider);
 
         var app = new CommandApp(registrar);
 
