@@ -89,8 +89,7 @@ namespace galaxy_api.Repositories
         public async Task UpdateMissionDetailsAsync(int id, Missions missions)
         {
             await using var conn = new NpgsqlConnection(_connectionString);
-
-            // Step 1: Fetch existing mission
+            
             const string selectQuery = @"
                 SELECT mission_id, name, mission_type_id, launch_date, destination_planet_id
                 FROM missions
@@ -101,7 +100,6 @@ namespace galaxy_api.Repositories
             if (existingMission == null)
             throw new Exception($"Mission with ID {id} not found.");
 
-            // Step 2: Fill in missing values
             var updatedMission = new Missions
             {
                 Mission_Id = id,
@@ -111,7 +109,6 @@ namespace galaxy_api.Repositories
                 Destination_Planet_Id = missions.Destination_Planet_Id != 0 ? missions.Destination_Planet_Id : existingMission.Destination_Planet_Id
             };
 
-            // Step 3: Perform update
             const string updateQuery = @"
                 UPDATE missions
                 SET 

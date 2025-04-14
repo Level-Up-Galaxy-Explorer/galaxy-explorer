@@ -170,7 +170,7 @@ namespace galaxy_api.Controllers
         public async Task<ActionResult<ApiResponse<object>>> GetMissionStatusReport(
             [FromQuery] string? missionType,
             [FromQuery] string? status,
-            [FromQuery] string? groupBy) // "month" or "quarter"
+            [FromQuery] string? groupBy)
         {
             var report = await _missionService.GetMissionStatusReportAsync(missionType, status, groupBy);
             return Ok(new ApiResponse<object>
