@@ -22,7 +22,7 @@ public abstract class BaseApiService
 
     protected virtual HttpClient CreateClient()
     {
-        return HttpClientFactory.CreateClient();
+        return HttpClientFactory.CreateClient("BaseApiService");
     }
 
     protected virtual string GetFullUrl(string? relativePath = null)

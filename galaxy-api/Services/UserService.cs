@@ -24,6 +24,11 @@ namespace galaxy_api.Services
             return await _repository.GetUserByIdAsync(id);
         }
 
+        public async Task<Users?> GetUserByGoogleIdAsync(string id)
+        {
+            return await _repository.GetUserByGoogleIdAsync(id);
+        }
+
         public async Task AddUserAsync(Users users)
         {
             await _repository.AddUserAsync(users);

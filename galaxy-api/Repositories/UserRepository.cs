@@ -46,6 +46,23 @@ namespace galaxy_api.Repositories
             await using var conn = new NpgsqlConnection(_connectionString);
             return await conn.QueryFirstOrDefaultAsync<Users>(query, new { id });
         }
+        public async Task<Users?> GetUserByGoogleIdAsync(string id)
+        {
+            const string query = @"
+                SELECT 
+                    u.user_id,
+                    u.full_name,
+                    u.email_address,
+                    u.google_id,
+                    u.rank_id,
+                    u.is_active,
+                    u.created_at
+                FROM users u
+                WHERE u.google_id = @id";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            return await conn.QueryFirstOrDefaultAsync<Users>(query, new { id });
+        }
         public async Task AddUserAsync(Users users)
         {
             const string query = @"
