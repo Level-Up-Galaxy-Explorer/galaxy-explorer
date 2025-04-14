@@ -35,29 +35,20 @@ class Program
     }
     private static IConfiguration BuildConfiguration()
     {
-        IConfigurationBuilder builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", false, true);
+        IConfigurationBuilder builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
+            .AddEnvironmentVariables()
+            .AddCommandLine([]);
+
         return builder.Build();
     }
 
     private static ServiceCollection ConfigureServices(IConfiguration configuration)
     {
         var serviceCollection = new ServiceCollection();
-
-        var configurationBuilder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
-            .AddEnvironmentVariables()
-            .AddCommandLine([]);
-
-        IConfiguration configuration = configurationBuilder.Build();
-
         serviceCollection.AddHttpClient();
-        serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
-        serviceCollection.AddSingleton(resolver => resolver.GetRequiredService<IOptions<ApiSettings>>().Value);
-        serviceCollection.AddTransient<CrewListCommand>();
-
-        serviceCollection.AddTransient<ICrewsService, CrewsService>();
 
         serviceCollection.AddHttpClient("BaseApiService")
         .AddHttpMessageHandler<BearerTokenHandler>();
@@ -67,12 +58,12 @@ class Program
         serviceCollection.AddOptions<ApiSettings>();
 
         serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
-
         serviceCollection.AddSingleton<BearerTokenHandler>();
 
         serviceCollection.AddSingleton<IAuthService, GoogleAuthService>();
         serviceCollection.AddSingleton<IBackendAuthService, BackendAuthService>();
         serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
+        serviceCollection.AddTransient<ICrewsService, CrewsService>();
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
 
         return serviceCollection;
@@ -80,6 +71,7 @@ class Program
 
     private static CommandApp RegisterCommands(ServiceCollection services)
     {
+
         var registrar = new TypeRegistrar(services);
 
         var app = new CommandApp(registrar);
