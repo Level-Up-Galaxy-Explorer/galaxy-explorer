@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
+namespace galaxy_api.Services;
 public class GoogleAuthProvider : IGoogleAuthProvider
 {
     private readonly IConfiguration _configuration;
