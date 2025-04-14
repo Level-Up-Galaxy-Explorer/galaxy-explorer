@@ -65,9 +65,9 @@ public class CrewListCommand : AsyncCommand<EmptyCommandSetting>
 
             var crew = AnsiConsole.Prompt(
                 new SelectionPrompt<CrewSummaryDTO>()
-                    .Title("What's your [green]favorite fruit[/]?")
+                    .Title("Choose a crew:")
                     .PageSize(crewItems.Count)
-                    .MoreChoicesText("[grey](Move up and down to reveal more fruits)[/]")
+                    .MoreChoicesText("[grey](Move up and down to reveal more crews)[/]")
                     .AddChoices(crewItems).UseConverter(s => s.Name));
 
             var grid = ConsoleUiHelper.BuildCrewGrid(crew);
