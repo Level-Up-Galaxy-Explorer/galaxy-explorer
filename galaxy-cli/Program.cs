@@ -1,6 +1,7 @@
 ﻿using galaxy_cli.Commands;
 using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
+using galaxy_cli.Commands.PlanetCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
 using galaxy_cli.Services;
@@ -41,6 +42,16 @@ class Program
     private static ServiceCollection ConfigureServices(IConfiguration configuration)
     {
         var serviceCollection = new ServiceCollection();
+
+        var configurationBuilder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
+            .AddEnvironmentVariables()
+            .AddCommandLine([]);
+
+        IConfiguration configuration = configurationBuilder.Build();
+
         serviceCollection.AddHttpClient();
         serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
         serviceCollection.AddSingleton(resolver => resolver.GetRequiredService<IOptions<ApiSettings>>().Value);
@@ -48,14 +59,28 @@ class Program
 
         serviceCollection.AddTransient<ICrewsService, CrewsService>();
 
+        serviceCollection.AddHttpClient("BaseApiService")
+        .AddHttpMessageHandler<BearerTokenHandler>();
 
+        serviceCollection.AddSingleton<IConfiguration>(configuration);
+
+        serviceCollection.AddOptions<ApiSettings>();
+
+        serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
+
+        serviceCollection.AddSingleton<BearerTokenHandler>();
+
+        serviceCollection.AddSingleton<IAuthService, GoogleAuthService>();
+        serviceCollection.AddSingleton<IBackendAuthService, BackendAuthService>();
+        serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
+        serviceCollection.AddSingleton<IPlanetService, PlanetService>();
 
         return serviceCollection;
     }
 
-    private static CommandApp RegisterCommands(ServiceCollection serviceProvider)
+    private static CommandApp RegisterCommands(ServiceCollection services)
     {
-        var registrar = new TypeRegistrar(serviceProvider);
+        var registrar = new TypeRegistrar(services);
 
         var app = new CommandApp(registrar);
 
@@ -89,6 +114,12 @@ class Program
                 mission.AddCommand<MissionAbortCommand>("abort");
                 mission.AddCommand<MissionLaunchCommand>("launch");
                 mission.AddCommand<MissionsAssignCommand>("assign");
+            });
+
+            config.AddBranch("planets", mission =>
+            {
+                mission.SetDescription("View and manage planets.");
+                mission.AddCommand<PlanetListCommand>("list");
             });
 
         });
