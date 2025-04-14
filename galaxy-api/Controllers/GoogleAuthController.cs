@@ -13,10 +13,23 @@ namespace galaxy_api.Controllers
         private readonly IGoogleAuthProvider _googleAuthProvider;
         private readonly IUserService _userService;
 
-        public GoogleAuthController(IGoogleAuthProvider googleAuthProvider, IUserService userService)
+
+        private readonly IConfiguration _configuration;
+
+
+        public GoogleAuthController(IGoogleAuthProvider googleAuthProvider, IUserService userService, IConfiguration configuration)
         {
             _googleAuthProvider = googleAuthProvider;
             _userService = userService;
+            _configuration = configuration;
+        }
+
+        [HttpGet]
+        public ActionResult<String> TestSecrets()
+        {
+            return Ok(
+                $"{_configuration["Authentication:Google:ClientId"]}  =  {_configuration["Authentication:Google:ClientSecret"]}"
+            );
         }
 
         [HttpPost]
