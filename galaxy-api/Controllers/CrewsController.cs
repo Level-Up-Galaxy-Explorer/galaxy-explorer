@@ -3,12 +3,14 @@ using galaxy_api.DTOs;
 using galaxy_api.DTOs.Crews;
 using galaxy_api.Models;
 using galaxy_api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace galaxy_api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CrewsController : ControllerBase
 {
     private readonly ICrewsService _crewsService;
