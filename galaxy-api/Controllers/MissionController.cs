@@ -1,3 +1,4 @@
+using galaxy_api.Delegates;
 using galaxy_api.DTOs;
 using galaxy_api.Helpers;
 using galaxy_api.Models;
@@ -11,10 +12,14 @@ namespace galaxy_api.Controllers
     public class MissionController : ControllerBase
     {
         private readonly IMissionService _missionService;
+        private readonly FeedbackValidator _feedbackValidator;
+
 
         public MissionController(IMissionService missionService)
         {
             _missionService = missionService;
+           _feedbackValidator = FeedbackValidation.IsValidFeedback;
+
         }
 
         [HttpGet]
@@ -29,7 +34,7 @@ namespace galaxy_api.Controllers
             });
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<ActionResult<ApiResponse<Missions>>> GetMissionById(int id)
         {
             var mission = await _missionService.GetMissionByIdAsync(id);
@@ -71,7 +76,7 @@ namespace galaxy_api.Controllers
             return Ok(new ApiResponse<string>
             {
                 Success = true,
-                Message = "Mission details updated successfully",
+                Message = "Mission detail/s updated successfully",
                 Data = null
             });
         }
@@ -109,12 +114,12 @@ namespace galaxy_api.Controllers
 
             if (dto.Status_Id == 3)
             {
-                if (string.IsNullOrWhiteSpace(dto.Feedback))
+                if (dto.Feedback is not {} feedback || !_feedbackValidator(dto.Feedback))
                 {
                     return BadRequest(new ApiResponse<string>
                     {
                         Success = false,
-                        Message = "Feedback is required when marking a mission as Completed.",
+                        Message = "Feedback must be at least 10 characters.",
                         Data = null
                     });
                 }
@@ -135,12 +140,12 @@ namespace galaxy_api.Controllers
             }
             else if (dto.Status_Id == 4)
             {
-                if (string.IsNullOrWhiteSpace(dto.Feedback))
+                if (dto.Feedback is not {} feedback || !_feedbackValidator(dto.Feedback))
                 {
                     return BadRequest(new ApiResponse<string>
                     {
                         Success = false,
-                        Message = "Feedback is required when marking a mission as Aborted.",
+                        Message = "Feedback must be at least 10 characters.",
                         Data = null
                     });
                 }

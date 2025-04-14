@@ -63,7 +63,6 @@ namespace galaxy_api.Repositories
                 UPDATE users
                 SET 
                     full_name = @Full_Name,
-                    email_address =@Email_Address
                 WHERE user_id = @id";
 
             var parameters = new
