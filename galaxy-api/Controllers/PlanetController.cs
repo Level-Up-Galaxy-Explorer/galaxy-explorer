@@ -1,5 +1,6 @@
 ﻿using galaxy_api.DTOs;
 using galaxy_api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,7 @@ namespace galaxy_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PlanetController : ControllerBase
     {
         private readonly IPlanetService _planetService;

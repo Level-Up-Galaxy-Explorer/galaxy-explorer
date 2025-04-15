@@ -1,9 +1,14 @@
 ﻿using galaxy_cli.Commands;
 using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
+using galaxy_cli.Commands.PlanetCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
+using galaxy_cli.Services;
+using galaxy_cli.Services.Base;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Spectre.Console.Cli;
 
 namespace galaxy_cli;
@@ -12,8 +17,8 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-
-        var services = ConfigureServices();
+        var configuration = BuildConfiguration();
+        var services = ConfigureServices(configuration);
 
         var app = RegisterCommands(services);
 
@@ -28,22 +33,44 @@ class Program
             return 0;
         }
     }
-
-
-    private static ServiceProvider ConfigureServices()
+    private static IConfiguration BuildConfiguration()
     {
-        var serviceCollection = new ServiceCollection();
+        IConfigurationBuilder builder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
+            .AddEnvironmentVariables()
+            .AddCommandLine([]);
 
-        serviceCollection.AddHttpClient();
-
-        return serviceCollection.BuildServiceProvider();
+        return builder.Build();
     }
 
-    private static CommandApp RegisterCommands(ServiceProvider serviceProvider)
+    private static ServiceCollection ConfigureServices(IConfiguration configuration)
     {
-        var services = new ServiceCollection();
+        var serviceCollection = new ServiceCollection();
+        serviceCollection.AddHttpClient();
 
-        services.AddHttpClient();
+        serviceCollection.AddHttpClient("BaseApiService")
+        .AddHttpMessageHandler<BearerTokenHandler>();
+
+        serviceCollection.AddSingleton<IConfiguration>(configuration);
+
+        serviceCollection.AddOptions<ApiSettings>();
+
+        serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
+        serviceCollection.AddSingleton<BearerTokenHandler>();
+
+        serviceCollection.AddSingleton<IAuthService, GoogleAuthService>();
+        serviceCollection.AddSingleton<IBackendAuthService, BackendAuthService>();
+        serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
+        serviceCollection.AddTransient<ICrewsService, CrewsService>();
+        serviceCollection.AddSingleton<IPlanetService, PlanetService>();
+
+        return serviceCollection;
+    }
+
+    private static CommandApp RegisterCommands(ServiceCollection services)
+    {
 
         var registrar = new TypeRegistrar(services);
 
@@ -79,6 +106,12 @@ class Program
                 mission.AddCommand<MissionAbortCommand>("abort");
                 mission.AddCommand<MissionLaunchCommand>("launch");
                 mission.AddCommand<MissionsAssignCommand>("assign");
+            });
+
+            config.AddBranch("planets", mission =>
+            {
+                mission.SetDescription("View and manage planets.");
+                mission.AddCommand<PlanetListCommand>("list");
             });
 
         });

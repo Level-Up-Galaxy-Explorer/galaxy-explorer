@@ -25,6 +25,14 @@ resource "aws_ecs_task_definition" "ge_ecs_task" {
       {
         "name" : "ConnectionStrings__DefaultConnection",
         "valueFrom" : "arn:aws:ssm:${var.default_region}:${var.aws_account_id}:parameter/geapp-connection-string"
+      },
+      {
+        "name" : "Authentication__Google__ClientId",
+        "valueFrom" : "arn:aws:ssm:${var.default_region}:${var.aws_account_id}:parameter/geapp-google-client-id"
+      },
+      {
+        "name" : "Authentication__Google__ClientSecret",
+        "valueFrom" : "arn:aws:ssm:${var.default_region}:${var.aws_account_id}:parameter/geapp-google-client-secret"
       }
     ]
   }])
