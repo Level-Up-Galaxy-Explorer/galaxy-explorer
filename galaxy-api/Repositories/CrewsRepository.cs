@@ -15,7 +15,7 @@ public class CrewsRepository : ICrewsRepositoty
 {
 
     private readonly string _connectionString;
-    private static readonly List<int> ActiveMissionStatusIds = new List<int> {2};
+    private static readonly List<int> ActiveMissionStatusIds = new List<int> { 2 };
 
     public CrewsRepository(IConfiguration configuration)
     {
@@ -310,9 +310,9 @@ public class CrewsRepository : ICrewsRepositoty
         {
 
             await transaction.RollbackAsync();
-            // int failedUserId = TryParseUserIdFromError(ex.Detail);
-            // if (ex.SqlState == "23503") { return CrewErrors.InvalidUserId(failedUserId, ex.ConstraintName); }
-            // if (ex.SqlState == "23505") { return CrewErrors.UserAlreadyAssigned(failedUserId, ex.ConstraintName); }
+            int failedUserId = TryParseUserIdFromError(ex.Detail);
+            if (ex.SqlState == "23503") { return CrewErrors.InvalidUserId(failedUserId, ex.ConstraintName); }
+            if (ex.SqlState == "23505") { return CrewErrors.UserAlreadyAssigned(failedUserId, ex.ConstraintName); }
             Console.WriteLine($"DATABASE ERROR: {ex}");
             return DomainErrros.Database.Unexpected(ex.Message, ex.SqlState);
         }
@@ -323,6 +323,24 @@ public class CrewsRepository : ICrewsRepositoty
             return DomainErrros.General.Unexpected($"An unexpected error occurred while adding crew members: {ex.Message}");
         }
 
+    }
+
+    private int TryParseUserIdFromError(string? detail)
+    {
+        try
+        {
+            if (detail != null && detail.Contains("(user_id)=("))
+            {
+                var parts = detail.Split(new[] { "(user_id)=(" }, StringSplitOptions.None);
+                if (parts.Length > 1)
+                {
+                    var idPart = parts[1].Split(')')[0];
+                    if (int.TryParse(idPart, out int userId)) return userId;
+                }
+            }
+        }
+        catch { }
+        return 0;
     }
 
     public async Task<ErrorOr<Success>> RemoveCrewMembersAsync(int crewId, UpdateCrewMembersDto dto)
