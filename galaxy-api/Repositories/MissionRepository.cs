@@ -31,16 +31,7 @@ namespace galaxy_api.Repositories
                 JOIN users u on m.created_by = u.full_name";
 
             await using var conn = new NpgsqlConnection(_connectionString);
-            var missions = await conn.QueryAsync<Missions, Users, Missions>(
-            query,
-            (mission, user) =>
-            {
-                mission.Created_By = user.Full_Name;
-                return mission;
-            },
-            splitOn: "created_by"
-            );
-
+            var missions = await conn.QueryAsync<Missions>(query);
             return missions;
         }
         
