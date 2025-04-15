@@ -8,6 +8,7 @@ using galaxy_cli.Services;
 using galaxy_cli.Services.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectre.Console.Cli;
 
@@ -48,6 +49,20 @@ class Program
     private static ServiceCollection ConfigureServices(IConfiguration configuration)
     {
         var serviceCollection = new ServiceCollection();
+
+        serviceCollection.AddLogging(builder =>
+            {
+                // builder.ClearProviders();
+                // builder.AddConfiguration(configuration.GetSection("Logging"));
+                // builder.AddConsole();
+                // builder.SetMinimumLevel(LogLevel.None);
+                // // #if DEBUG
+                // //     builder.SetMinimumLevel(LogLevel.Debug);
+                // // #else
+                // //     builder.SetMinimumLevel(LogLevel.Information);
+                // // #endif
+            });
+
         serviceCollection.AddHttpClient();
 
         serviceCollection.AddHttpClient("BaseApiService")
@@ -63,8 +78,9 @@ class Program
         serviceCollection.AddSingleton<IAuthService, GoogleAuthService>();
         serviceCollection.AddSingleton<IBackendAuthService, BackendAuthService>();
         serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
-        serviceCollection.AddTransient<ICrewsService, CrewsService>();
+        serviceCollection.AddSingleton<ICrewsService, CrewsService>();
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
+        serviceCollection.AddSingleton<IUserService, UserService>();
 
         return serviceCollection;
     }
@@ -90,11 +106,12 @@ class Program
 
             config.AddBranch("crew", crew =>
             {
-                crew.SetDescription("Manage your ship crew.");
+                crew.SetDescription("Manage your crew.");
                 crew.AddCommand<CrewListCommand>("list");
                 crew.AddCommand<CrewDetailCommand>("details");
                 crew.AddCommand<CrewAssignCommand>("assign");
                 crew.AddCommand<CrewCreateCommand>("create");
+                crew.AddCommand<CrewFireCommand>("fire");
             });
 
             config.AddBranch("missions", mission =>
