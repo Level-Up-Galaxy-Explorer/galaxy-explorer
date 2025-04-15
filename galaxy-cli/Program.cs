@@ -1,4 +1,5 @@
-﻿using galaxy_cli.Commands;
+﻿using System.Reflection;
+using galaxy_cli.Commands;
 using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.Commands.PlanetCommands;
@@ -41,8 +42,13 @@ class Program
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
-            .AddEnvironmentVariables()
-            .AddCommandLine([]);
+            .AddEnvironmentVariables().AddCommandLine([]);
+
+        var baseSettingsStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("galaxy_cli.appsettings.json");
+        var envSettingsStream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"galaxy_cli.appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json");
+
+        if (baseSettingsStream != null) configurationBuilder.AddJsonStream(baseSettingsStream);
+        if (envSettingsStream != null) configurationBuilder.AddJsonStream(envSettingsStream);
 
         IConfiguration configuration = configurationBuilder.Build();
 

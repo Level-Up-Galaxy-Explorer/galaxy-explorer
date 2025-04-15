@@ -1,0 +1,67 @@
+name: Build & Release Galaxy CLI
+
+on:
+  push:
+    tags:
+      - "v*" # we'll use tags like v1.0.0
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: galaxy-cli
+  PROJECT_DIR: galaxy-cli
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runtime: [win-x64] # linux-x64, osx-arm64?
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ env.PROJECT_DIR }}/${{ env.APP_NAME }}.csproj
+
+      - name: Publish for ${{ matrix.runtime }}
+        run: |
+          dotnet publish ${{ env.PROJECT_DIR }}/${{ env.APP_NAME }}.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.runtime }} \
+            --self-contained true \
+            /p:PublishSingleFile=true \
+            /p:EnableCompressionInSingleFile=true \
+            --output ./publish/${{ matrix.runtime }}
+
+      - name: Rename output with version and runtime
+        run: |
+          VERSION=${GITHUB_REF_NAME} # v1.0.2, etc.
+          EXE_NAME="${{ env.APP_NAME }}-${VERSION}-${{ matrix.runtime }}.exe"
+          ZIP_NAME="${{ env.APP_NAME }}-${VERSION}-${{ matrix.runtime }}.zip"
+
+          mv "publish/${{ matrix.runtime }}/${{ env.APP_NAME }}.exe" "publish/${{ matrix.runtime }}/${EXE_NAME}"
+          cd publish/${{ matrix.runtime }}
+          zip "../${ZIP_NAME}" "${EXE_NAME}"
+          cd ../..
+
+          echo "EXE_PATH=publish/${{ matrix.runtime }}/${EXE_NAME}" >> $GITHUB_ENV
+          echo "ZIP_PATH=publish/${ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Create GitHub Release & Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Galaxy CLI ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
+          files: |
+            ${{ env.EXE_PATH }}
+            ${{ env.ZIP_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
