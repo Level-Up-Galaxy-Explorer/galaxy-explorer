@@ -8,6 +8,7 @@ using galaxy_cli.Services;
 using galaxy_cli.Services.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Spectre.Console.Cli;
 
 namespace galaxy_cli;
@@ -16,8 +17,8 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-
-        var services = ConfigureServices();
+        var configuration = BuildConfiguration();
+        var services = ConfigureServices(configuration);
 
         var app = RegisterCommands(services);
 
@@ -32,20 +33,21 @@ class Program
             return 0;
         }
     }
-
-    private static ServiceCollection ConfigureServices()
+    private static IConfiguration BuildConfiguration()
     {
-        var serviceCollection = new ServiceCollection();
-
-        var configurationBuilder = new ConfigurationBuilder()
+        IConfigurationBuilder builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
             .AddEnvironmentVariables()
             .AddCommandLine([]);
 
-        IConfiguration configuration = configurationBuilder.Build();
+        return builder.Build();
+    }
 
+    private static ServiceCollection ConfigureServices(IConfiguration configuration)
+    {
+        var serviceCollection = new ServiceCollection();
         serviceCollection.AddHttpClient();
 
         serviceCollection.AddHttpClient("BaseApiService")
@@ -56,12 +58,12 @@ class Program
         serviceCollection.AddOptions<ApiSettings>();
 
         serviceCollection.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
-
         serviceCollection.AddSingleton<BearerTokenHandler>();
 
         serviceCollection.AddSingleton<IAuthService, GoogleAuthService>();
         serviceCollection.AddSingleton<IBackendAuthService, BackendAuthService>();
         serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
+        serviceCollection.AddTransient<ICrewsService, CrewsService>();
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
 
         return serviceCollection;
@@ -71,6 +73,7 @@ class Program
     {
 
         var registrar = new TypeRegistrar(services);
+
         var app = new CommandApp(registrar);
 
         app.Configure(config =>
