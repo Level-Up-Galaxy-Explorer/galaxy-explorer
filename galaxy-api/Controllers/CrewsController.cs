@@ -8,10 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace galaxy_api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize]
-public class CrewsController : ControllerBase
+
+public class CrewsController : ApiController
 {
     private readonly ICrewsService _crewsService;
 
@@ -41,18 +39,18 @@ public class CrewsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult> CreateCrew([FromBody] CreateCrewDto crewDto)
+    public async Task<IActionResult> CreateCrew([FromBody] CreateCrewDto crewDto)
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(ModelState);
+            var validationErrors = ModelState.Values.ToErrorOr();
+            return Problem(validationErrors.ErrorsOrEmptyList);
         }
-
         ErrorOr<Crew> createCrewResult = await _crewsService.CreateCrew(crewDto);
 
         return createCrewResult.Match(
                 crew => CreatedAtAction(nameof(GetCrew), new { id = crew.CrewId }, crew),
-                errors => Problem(errors.FirstOrDefault().Code, title: errors.FirstOrDefault().Description)
+                Problem
             );
     }
 
@@ -66,9 +64,9 @@ public class CrewsController : ControllerBase
 
         ErrorOr<Success> updateResult = await _crewsService.UpdateCrewDetailsAsync(id, dto);
 
-        return updateResult.Match<IActionResult>(
+        return updateResult.Match(
             success => NoContent(),
-            errors => Problem(errors.FirstOrDefault().Code, title: errors.FirstOrDefault().Description)
+            Problem
         );
 
     }
@@ -78,17 +76,19 @@ public class CrewsController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return ValidationProblem(ModelState);
+            var validationErrors = ModelState.Values.ToErrorOr();
+            return Problem(validationErrors.ErrorsOrEmptyList);
         }
+
         ErrorOr<Success> addResult = await _crewsService.AddCrewMembersAsync(id, dto);
-        return addResult.Match<IActionResult>(
+        return addResult.Match(
             success => NoContent(),
-            errors => Problem(errors.FirstOrDefault().Code, title: errors.FirstOrDefault().Description)
+            Problem
         );
     }
 
 
-    [HttpDelete("{id:int}/members")]
+    [HttpPatch("{id:int}/members")]
     public async Task<IActionResult> RemoveCrewMembers(int id, [FromBody] UpdateCrewMembersDto dto)
     {
         if (!ModelState.IsValid)
@@ -98,7 +98,7 @@ public class CrewsController : ControllerBase
         ErrorOr<Success> removeResult = await _crewsService.RemoveCrewMembersAsync(id, dto);
         return removeResult.Match<IActionResult>(
             success => NoContent(),
-            errors => Problem(errors.FirstOrDefault().Code, title: errors.FirstOrDefault().Description)
+            Problem
         );
     }
 
