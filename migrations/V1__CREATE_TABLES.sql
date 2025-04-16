@@ -77,7 +77,10 @@ CREATE TABLE Mission_Crew (
     mission_crew_id SERIAL PRIMARY KEY,
     mission_id INT NOT NULL REFERENCES Missions(mission_id),
     crew_id INT NOT NULL REFERENCES Crew(crew_id),
-    assigned_at TIMESTAMP NOT NULL
+    ended_at TIMESTAMP,
+    assigned_at TIMESTAMP NOT null,
+    mission_status_id INT NOT NULL REFERENCES Status(status_id),
+    feedback VARCHAR(255)
 );
 
 CREATE TABLE User_Crew (
