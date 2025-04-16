@@ -1,6 +1,7 @@
 using System.Text.Json;
 using galaxy_api.DTOs;
 using galaxy_cli.Services.Base;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace galaxy_cli.Services;
@@ -11,7 +12,8 @@ public sealed class PlanetService : BaseApiService, IPlanetService
 
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public PlanetService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings) : base(httpClientFactory, apiSettings)
+    public PlanetService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, ILogger<PlanetService> logger)
+    : base(httpClientFactory, apiSettings, logger)
     {
         _jsonOptions = new JsonSerializerOptions
         {
@@ -24,28 +26,7 @@ public sealed class PlanetService : BaseApiService, IPlanetService
 
     public async Task<IEnumerable<PlanetDTO>> GetPlanetsAsync()
     {
-        var response = await _httpClient.GetAsync(GetFullUrl());
-
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            try
-            {
-                return JsonSerializer.Deserialize<IEnumerable<PlanetDTO>>(content, _jsonOptions) ?? new List<PlanetDTO>();
-            }
-            catch (JsonException ex)
-            {
-                Console.WriteLine($"Error deserializing planet data: {ex.Message}");
-                return new List<PlanetDTO>();
-            }
-        }
-        else
-        {
-            Console.WriteLine($"Error fetching planets: {response.StatusCode}");
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(errorContent);
-            return new List<PlanetDTO>();
-        }
+        return await GetAndDeserializeAsync<IEnumerable<PlanetDTO>>();
     }
 }
 

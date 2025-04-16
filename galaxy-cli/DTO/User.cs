@@ -1,4 +1,4 @@
-namespace galaxy_api.Models
+namespace galaxy_cli.DTO
 {
     public class UserDTO{
         public int User_Id {get;set;}

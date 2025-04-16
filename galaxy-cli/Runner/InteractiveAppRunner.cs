@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -6,6 +7,8 @@ namespace galaxy_cli.Runner;
 public class InteractiveAppRunner
 {
     private readonly CommandApp _app;
+    private readonly List<string> _commandHistory = new();
+    private int _historyIndex = -1;
 
     public InteractiveAppRunner(CommandApp app)
     {
@@ -20,16 +23,15 @@ public class InteractiveAppRunner
         bool keepRunning = true;
         while (keepRunning)
         {
-            var input = AnsiConsole.Prompt(
-                new TextPrompt<string>("[green]>[/]")
-                    .PromptStyle("green")
-                    .AllowEmpty()
-                );
+            string input = ReadInputWithHistory();
 
             if (string.IsNullOrWhiteSpace(input))
             {
                 continue;
             }
+
+            _commandHistory.Add(input);
+            _historyIndex = _commandHistory.Count;
 
             var simulatedArgs = input.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var commandName = simulatedArgs[0].ToLowerInvariant();
@@ -41,23 +43,26 @@ public class InteractiveAppRunner
                 continue;
             }
 
+            if (commandName == "clear" || commandName == "cls")
+            {
+                AnsiConsole.Clear();
+                ShowWelcomeMessage();
+                continue;
+            }
+
             try
             {
                 await _app.RunAsync(simulatedArgs);
             }
             catch (CommandParseException ex)
             {
-                // Handle errors specifically from Spectre's parsing/validation
                 AnsiConsole.MarkupLine($"[red]Error: {ex.Message}[/]");
-                // Optionally show help after a parse error
-                await _app.RunAsync(new[] { commandName = "--help" });
+                await _app.RunAsync(new[] { "--help" });
             }
             catch (Exception ex)
             {
                 AnsiConsole.MarkupLine($"[red]An unexpected error occurred:[/]");
                 AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-
-                // keepRunning = false;
             }
 
             if (keepRunning)
@@ -68,6 +73,73 @@ public class InteractiveAppRunner
         AnsiConsole.MarkupLine("[dim]Goodbye![/]");
     }
 
+    private string ReadInputWithHistory()
+    {
+        var input = new List<char>();
+        ConsoleKeyInfo key;
+
+        AnsiConsole.Markup("[green]>[/] ");
+
+        while (true)
+        {
+            key = Console.ReadKey(intercept: true);
+
+            if (key.Key == ConsoleKey.Enter)
+            {
+                Console.WriteLine();
+                break;
+            }
+            else if (key.Key == ConsoleKey.Backspace)
+            {
+                if (input.Count > 0)
+                {
+                    input.RemoveAt(input.Count - 1);
+                    Console.Write("\b \b");
+                }
+            }
+            else if (key.Key == ConsoleKey.UpArrow)
+            {
+                if (_historyIndex > 0)
+                {
+                    _historyIndex--;
+                    ReplaceInputWithHistory(input, _commandHistory[_historyIndex]);
+                }
+            }
+            else if (key.Key == ConsoleKey.DownArrow)
+            {
+                if (_historyIndex < _commandHistory.Count - 1)
+                {
+                    _historyIndex++;
+                    ReplaceInputWithHistory(input, _commandHistory[_historyIndex]);
+                }
+                else
+                {
+                    _historyIndex = _commandHistory.Count;
+                    ReplaceInputWithHistory(input, string.Empty);
+                }
+            }
+            else
+            {
+                input.Add(key.KeyChar);
+                Console.Write(key.KeyChar);
+            }
+        }
+
+        return new string(input.ToArray());
+    }
+
+    private void ReplaceInputWithHistory(List<char> input, string history)
+    {
+        while (input.Count > 0)
+        {
+            Console.Write("\b \b");
+            input.RemoveAt(input.Count - 1);
+        }
+
+        input.AddRange(history);
+        Console.Write(history);
+    }
+
     private void ShowWelcomeMessage()
     {
         AnsiConsole.Clear();
@@ -75,13 +147,15 @@ public class InteractiveAppRunner
             new FigletText("Galaxy Explorer")
                 .Centered()
                 .Color(Color.Blue));
+
+        AnsiConsole.Write(new Rule("[yellow]Welcome to Galaxy Explorer CLI[/]").RuleStyle("grey").Centered());
+
         AnsiConsole.MarkupLine("[grey]Type a command (e.g., 'crew list', 'mission list'), '--help/-h', or 'exit'/'quit'.[/]");
         AnsiConsole.WriteLine();
     }
 
     private void SetupCtrlCHandler()
     {
-        
         Console.CancelKeyPress -= Console_CancelKeyPress;
         Console.CancelKeyPress += Console_CancelKeyPress;
     }
@@ -89,9 +163,6 @@ public class InteractiveAppRunner
     private void Console_CancelKeyPress(object? sender, ConsoleCancelEventArgs e)
     {
         AnsiConsole.MarkupLine("\n[yellow]Ctrl+C detected. Exiting...[/]");
-        // Perform cleanup here if needed
         e.Cancel = false;
-                          // Environment.Exit(1); // Force exit if necessary
     }
-
 }
