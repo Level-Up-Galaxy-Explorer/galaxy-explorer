@@ -1,6 +1,7 @@
 using galaxy_api.Repositories;
 using galaxy_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,12 @@ builder.Services.AddScoped<IMissionService, MissionService>();
 builder.Services.AddScoped<ICrewsRepositoty, CrewsRepository>();
 builder.Services.AddScoped<ICrewsService, CrewsService>();
 
+builder.Services.AddScoped<IRankRepository, RankRepository>();
+builder.Services.AddScoped<IRankService, RankService>();
+
 builder.Services.AddSingleton<IGoogleAuthProvider, GoogleAuthProvider>();
+
+builder.Services.AddScoped<galaxy_api.Services.IAuthorizationService, AuthorizationService>();
 
 builder.Services.AddHealthChecks()
        .AddCheck<DatabaseHealthCheck>("Database");

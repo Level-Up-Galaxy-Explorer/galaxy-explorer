@@ -1,51 +1,58 @@
-using System.ComponentModel;
-using galaxy_api.DTOs;
-using galaxy_cli.Commands.Base;
-using galaxy_cli.Services;
-using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
+using galaxy_cli.Services;
+using galaxy_cli.DTO.Planets;
 
 namespace galaxy_cli.Commands.PlanetCommands;
 
-[Description("Displays planets")]
-public class PlanetListCommand : BaseApiCommand<EmptyCommandSettings>
+public class PlanetListCommand : AsyncCommand
 {
     private readonly IPlanetService _planetService;
 
-    public PlanetListCommand(IPlanetService planetService, ILogger<PlanetListCommand> logger) : base(logger)
+    public PlanetListCommand(IPlanetService planetService)
     {
         _planetService = planetService;
     }
-    protected override async Task<int> ExecuteApiLogic(CommandContext context, EmptyCommandSettings settings)
+
+    public override async Task<int> ExecuteAsync(CommandContext context)
     {
+        var planets = await _planetService.GetAllPlanetsAsync();
 
-        IEnumerable<PlanetDTO> planets = [];
-        await AnsiConsole.Status()
-        .StartAsync("Calling API...", async ctx =>
+        if (!planets.Any())
         {
-            ctx.Status("Processing...");
-            planets = _planetService.GetPlanetsAsync().GetAwaiter().GetResult();
-            AnsiConsole.MarkupLine($"[green]API call successful[/]");
-        });
-
-        var table = new Table();
-
-        table.AddColumns("Name", "Type", "Galaxy");
-
-        if (planets.Any())
-        {
-            AnsiConsole.MarkupLine($"\n[blue]Planets:[/]");
-            foreach (var planet in planets)
-            {
-                table.AddRow(planet.Name, planet.PlanetType, planet.Galaxy);
-            }
-            AnsiConsole.Write(table);
+            AnsiConsole.MarkupLine("[red]No planets found.[/]");
+            return 0;
         }
-        else
+
+        var table = new Table()
+            .Border(TableBorder.Rounded)
+            .AddColumns("[bold]Name[/]", "[bold]Type[/]", "[bold]Galaxy[/]");
+
+        foreach (var planet in planets)
         {
-            Console.WriteLine("No planets found.");
+            table.AddRow(
+                $"[green]{planet.Name}[/]",
+                $"[yellow]{planet.PlanetType}[/]",
+                $"[grey]{planet.Galaxy}[/]"
+            );
         }
+
+        AnsiConsole.Write(table);
+
+        var selectedPlanet = AnsiConsole.Prompt(
+            new SelectionPrompt<PlanetDTO>()
+                .Title("[yellow]Select a planet to view more details:[/]")
+                .PageSize(10)
+                .AddChoices(planets)
+                .UseConverter(planet => planet.Name) 
+        );
+
+        AnsiConsole.MarkupLine($"\n[bold yellow]Details for {selectedPlanet.Name}:[/]");
+        AnsiConsole.MarkupLine($"  [green]Type:[/] {selectedPlanet.PlanetType}");
+        AnsiConsole.MarkupLine($"  [green]Galaxy:[/] {selectedPlanet.Galaxy}");
+        AnsiConsole.MarkupLine($"  [green]Has Life:[/] {selectedPlanet.HasLife}");
+        AnsiConsole.MarkupLine($"  [green]Coordinates:[/] {selectedPlanet.Coordinates}");
+
         return 0;
     }
 }

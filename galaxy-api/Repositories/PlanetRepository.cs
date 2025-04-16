@@ -197,5 +197,43 @@ namespace galaxy_api.Repositories
             var affectedRows = await cmd.ExecuteNonQueryAsync();
             return affectedRows > 0;
         }
+
+        public async Task<IEnumerable<string>> GetPlanetTypesAsync()
+        {
+            var planetTypes = new List<string>();
+            var query = @"SELECT name FROM planet_type";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                planetTypes.Add(reader.GetString(0));
+            }
+
+            return planetTypes;
+        }
+
+        public async Task<IEnumerable<string>> GetGalaxiesAsync()
+        {
+            var galaxies = new List<string>();
+            var query = @"SELECT name FROM galaxy";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                galaxies.Add(reader.GetString(0));
+            }
+
+            return galaxies;
+        }
     }
 }
