@@ -9,7 +9,7 @@ public class PlanetListCommand : AsyncCommand
 {
     private readonly IPlanetService _planetService;
 
-    public PlanetListCommand(IPlanetService planetService, ILogger<PlanetListCommand> logger) : base(logger)
+    public PlanetListCommand(IPlanetService planetService)
     {
         _planetService = planetService;
     }
