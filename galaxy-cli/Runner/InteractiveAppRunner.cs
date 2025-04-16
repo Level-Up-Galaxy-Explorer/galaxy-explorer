@@ -41,6 +41,13 @@ public class InteractiveAppRunner
                 continue;
             }
 
+            if (commandName == "clear" || commandName == "cls")
+            {
+                AnsiConsole.Clear();
+                ShowWelcomeMessage(); 
+                continue;
+            }
+
             try
             {
                 await _app.RunAsync(simulatedArgs);
@@ -75,6 +82,9 @@ public class InteractiveAppRunner
             new FigletText("Galaxy Explorer")
                 .Centered()
                 .Color(Color.Blue));
+
+        AnsiConsole.Write(new Rule("[yellow]Welcome to Galaxy Explorer CLI[/]").RuleStyle("grey").Centered());
+                
         AnsiConsole.MarkupLine("[grey]Type a command (e.g., 'crew list', 'mission list'), '--help/-h', or 'exit'/'quit'.[/]");
         AnsiConsole.WriteLine();
     }
