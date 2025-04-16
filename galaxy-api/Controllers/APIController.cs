@@ -1,4 +1,5 @@
 using ErrorOr;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace galaxy_api.Controllers;
