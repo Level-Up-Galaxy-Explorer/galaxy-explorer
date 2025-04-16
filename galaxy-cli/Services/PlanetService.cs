@@ -3,8 +3,8 @@ using System.Text;
 using galaxy_cli.DTO.Planets;
 using galaxy_cli.Services;
 using galaxy_cli.Services.Base;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace galaxy_cli.Services;
 
@@ -13,8 +13,8 @@ public sealed class PlanetService : BaseApiService, IPlanetService
     private readonly HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public PlanetService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings) 
-        : base(httpClientFactory, apiSettings)
+    public PlanetService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings,  ILogger<MissionService> logger) 
+        : base(httpClientFactory, apiSettings, logger)
     {
         _jsonOptions = new JsonSerializerOptions
         {
