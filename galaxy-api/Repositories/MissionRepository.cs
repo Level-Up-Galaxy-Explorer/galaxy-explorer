@@ -26,9 +26,8 @@ namespace galaxy_api.Repositories
                     m.status_id,
                     m.reward_credit,
                     m.feedback,
-                    u.full_name AS created_by
-                FROM missions m
-                JOIN users u on m.created_by = u.full_name";
+                    m.created_by
+                FROM missions m";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             var missions = await conn.QueryAsync<Missions>(query);
@@ -47,26 +46,14 @@ namespace galaxy_api.Repositories
             m.status_id,
             m.reward_credit,
             m.feedback,
-            u.full_name AS created_by
+            m.created_by
         FROM missions m
-        JOIN users u ON m.created_by = u.full_name
         WHERE m.mission_id = @Id";
 
-    await using var conn = new NpgsqlConnection(_connectionString);
+        await using var conn = new NpgsqlConnection(_connectionString);
+        return await conn.QueryFirstOrDefaultAsync<Missions>(query, new { id });
+        }
 
-    var result = await conn.QueryAsync<Missions, Users, Missions>(
-        query,
-        (mission, user) =>
-        {
-            mission.Created_By = user.Full_Name;
-            return mission;
-        },
-        new { id },
-        splitOn: "created_by"
-        );
-
-            return result.FirstOrDefault();
-        }   
         public async Task CreateMissionAsync(Missions missions)
         {
             const string query = @"
