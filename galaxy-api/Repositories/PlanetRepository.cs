@@ -17,7 +17,7 @@ namespace galaxy_api.Repositories
         public async Task<IEnumerable<Planet>> GetAllPlanetsAsync()
         {
             var planets = new List<Planet>();
-            var query = @"SELECT p.name, g.name as galaxy, pt.name as planet_type, 
+            var query = @"SELECT p.planet_id, p.name, g.name as galaxy, pt.name as planet_type, 
                           p.has_life, p.coordinates 
                           FROM planets p
                           JOIN galaxy g ON p.galaxy_id = g.galaxy_id
@@ -33,11 +33,12 @@ namespace galaxy_api.Repositories
             {
                 planets.Add(new Planet
                 {
-                    Name = reader.GetString(0),
-                    Galaxy = reader.GetString(1),
-                    PlanetType = reader.GetString(2),
-                    HasLife = reader.GetBoolean(3),
-                    Coordinates = reader.GetString(4)
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Galaxy = reader.GetString(2),
+                    PlanetType = reader.GetString(3),
+                    HasLife = reader.GetBoolean(4),
+                    Coordinates = reader.GetString(5)
                 });
             }
 
@@ -46,7 +47,7 @@ namespace galaxy_api.Repositories
 
         public async Task<Planet?> GetPlanetByIdAsync(int id)
         {
-            var query = @"SELECT p.name, g.name as galaxy, pt.name as planet_type, 
+            var query = @"SELECT p.planet_id, p.name, g.name as galaxy, pt.name as planet_type, 
                           p.has_life, p.coordinates 
                           FROM planets p
                           JOIN galaxy g ON p.galaxy_id = g.galaxy_id
@@ -64,11 +65,12 @@ namespace galaxy_api.Repositories
             {
                 return new Planet
                 {
-                    Name = reader.GetString(0),
-                    Galaxy = reader.GetString(1),
-                    PlanetType = reader.GetString(2),
-                    HasLife = reader.GetBoolean(3),
-                    Coordinates = reader.GetString(4)
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Galaxy = reader.GetString(2),
+                    PlanetType = reader.GetString(3),
+                    HasLife = reader.GetBoolean(4),
+                    Coordinates = reader.GetString(5)
                 };
             }
 
@@ -78,7 +80,7 @@ namespace galaxy_api.Repositories
         public async Task<IEnumerable<Planet>> SearchPlanetsAsync(string name)
         {
             var planets = new List<Planet>();
-            var query = @"SELECT p.name, g.name as galaxy, pt.name as planet_type, 
+            var query = @"SELECT p.planet_id, p.name, g.name as galaxy, pt.name as planet_type, 
                           p.has_life, p.coordinates 
                           FROM planets p
                           JOIN galaxy g ON p.galaxy_id = g.galaxy_id
@@ -96,11 +98,12 @@ namespace galaxy_api.Repositories
             {
                 planets.Add(new Planet
                 {
-                    Name = reader.GetString(0),
-                    Galaxy = reader.GetString(1),
-                    PlanetType = reader.GetString(2),
-                    HasLife = reader.GetBoolean(3),
-                    Coordinates = reader.GetString(4)
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Galaxy = reader.GetString(2),
+                    PlanetType = reader.GetString(3),
+                    HasLife = reader.GetBoolean(4),
+                    Coordinates = reader.GetString(5)
                 });
             }
 
@@ -114,7 +117,7 @@ namespace galaxy_api.Repositories
                                  (SELECT galaxy_id FROM galaxy WHERE name = @galaxy),
                                  (SELECT planet_type_id FROM planet_type WHERE name = @planetType),
                                  @hasLife, @coordinates)
-                          RETURNING name, 
+                          RETURNING planet_id, name, 
                                    (SELECT name FROM galaxy WHERE galaxy_id = planets.galaxy_id) as galaxy,
                                    (SELECT name FROM planet_type WHERE planet_type_id = planets.planet_type_id) as planet_type,
                                    has_life,
@@ -135,11 +138,12 @@ namespace galaxy_api.Repositories
             {
                 return new Planet
                 {
-                    Name = reader.GetString(0),
-                    Galaxy = reader.GetString(1),
-                    PlanetType = reader.GetString(2),
-                    HasLife = reader.GetBoolean(3),
-                    Coordinates = reader.GetString(4)
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Galaxy = reader.GetString(2),
+                    PlanetType = reader.GetString(3),
+                    HasLife = reader.GetBoolean(4),
+                    Coordinates = reader.GetString(5)
                 };
             }
 
@@ -192,6 +196,44 @@ namespace galaxy_api.Repositories
 
             var affectedRows = await cmd.ExecuteNonQueryAsync();
             return affectedRows > 0;
+        }
+
+        public async Task<IEnumerable<string>> GetPlanetTypesAsync()
+        {
+            var planetTypes = new List<string>();
+            var query = @"SELECT name FROM planet_type";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                planetTypes.Add(reader.GetString(0));
+            }
+
+            return planetTypes;
+        }
+
+        public async Task<IEnumerable<string>> GetGalaxiesAsync()
+        {
+            var galaxies = new List<string>();
+            var query = @"SELECT name FROM galaxy";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand(query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                galaxies.Add(reader.GetString(0));
+            }
+
+            return galaxies;
         }
     }
 }

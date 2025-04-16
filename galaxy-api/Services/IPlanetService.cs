@@ -12,5 +12,8 @@ namespace galaxy_api.Services
         Task<bool> UpdatePlanetAsync(int planetId, PlanetDTO planetDto);
         Task<PlanetDTO?> GetPlanetAsync(int id);
         Task<IEnumerable<PlanetDTO>> SearchPlanetsAsync(string name);
+
+        Task<IEnumerable<string>> GetPlanetTypesAsync();
+        Task<IEnumerable<string>> GetGalaxiesAsync();
     }
 }

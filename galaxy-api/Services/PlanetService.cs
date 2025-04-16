@@ -45,10 +45,23 @@ namespace galaxy_api.Services
             return await _repository.UpdatePlanetAsync(planetId, planet);
         }
 
+        public async Task<IEnumerable<string>> GetPlanetTypesAsync()
+        {
+            var planetTypes = await _repository.GetPlanetTypesAsync();
+            return planetTypes;
+        }
+
+        public async Task<IEnumerable<string>> GetGalaxiesAsync()
+        {
+            var galaxies = await _repository.GetGalaxiesAsync();
+            return galaxies;
+        }
+
         private PlanetDTO MapToDTO(Planet planet)
         {
             return new PlanetDTO
             {
+                Id = planet.Id,
                 Name = planet.Name,
                 Galaxy = planet.Galaxy,
                 PlanetType = planet.PlanetType,
@@ -61,6 +74,7 @@ namespace galaxy_api.Services
         {
             return new Planet
             {
+                Id = planetDto.Id,
                 Name = planetDto.Name,
                 Galaxy = planetDto.Galaxy,
                 PlanetType = planetDto.PlanetType,
