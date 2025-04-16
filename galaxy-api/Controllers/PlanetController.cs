@@ -53,6 +53,28 @@ namespace galaxy_api.Controllers
             return Ok(planets);
         }
 
+        [HttpGet("types")]
+        public async Task<ActionResult<IEnumerable<string>>> GetPlanetTypes()
+        {
+            var planetTypes = await _planetService.GetPlanetTypesAsync();
+            if (planetTypes == null || !planetTypes.Any())
+            {
+                return NotFound(new { Message = "No planet types found." });
+            }
+            return Ok(planetTypes);
+        }
+
+        [HttpGet("galaxies")]
+        public async Task<ActionResult<IEnumerable<string>>> GetGalaxies()
+        {
+            var galaxies = await _planetService.GetGalaxiesAsync();
+            if (galaxies == null || !galaxies.Any())
+            {
+                return NotFound(new { Message = "No galaxies found." });
+            }
+            return Ok(galaxies);
+        }
+
         [HttpPost]
         public async Task<ActionResult<PlanetDTO>> CreatePlanet([FromBody] PlanetDTO planetDto)
         {
