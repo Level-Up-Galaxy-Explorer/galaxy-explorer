@@ -25,17 +25,18 @@ INSERT INTO Planets (name, galaxy_id, planet_type_id, has_life, coordinates) VAL
 
 INSERT INTO Rank (title, description) VALUES
 ('Director', 'Assigns missions, crew and oversees the whole organization'),
-('Commander', 'Leads missions and oversees strategy'),
-('Pilot', 'Navigates and flies spacecraft'),
-('Engineer', 'Maintains and repairs technical systems'),
-('Scientist', 'Conducts research and analyzes mission data'),
-('Cadet', 'Entry-level rank for new recruits');
+('Commander', 'Leads missions and oversees strategy.'),
+('Captain', 'Navigates and flies spacecraft'),
+('Officer', 'Standard operational rank.'),
+('Admiral', 'Highest strategic command rank.'),
+('Cadet', 'Entry-level rank for new recruits.');
 
 INSERT INTO Status (name, description) VALUES
 ('Planned', 'Mission is being planned'),
 ('Launched', 'Mission has launched'),
 ('Completed', 'Mission successfully completed'),
-('Aborted', 'Mission was canceled or failed');
+('Failed', 'Mission failed'),
+('Aborted', 'Mission was canceled');
 
 INSERT INTO Mission_Type (name, description) VALUES
 ('Exploration', 'Investigating new planets and galaxies'),

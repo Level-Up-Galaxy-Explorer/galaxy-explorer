@@ -3,6 +3,7 @@ using System.Text;
 using galaxy_cli.DTO.Planets;
 using galaxy_cli.Services;
 using galaxy_cli.Services.Base;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace galaxy_cli.Services;

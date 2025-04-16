@@ -1,13 +1,16 @@
-﻿using galaxy_cli.Commands;
+﻿using System.Reflection;
+using galaxy_cli.Commands;
 using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.Commands.PlanetCommands;
+using galaxy_cli.Commands.UserCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
 using galaxy_cli.Services;
 using galaxy_cli.Services.Base;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Spectre.Console.Cli;
 
@@ -37,10 +40,15 @@ class Program
     {
         IConfigurationBuilder builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json", optional: true)
-            .AddEnvironmentVariables()
-            .AddCommandLine([]);
+            .AddEnvironmentVariables().AddCommandLine([]);
+
+        var baseSettingsStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("galaxy_cli.appsettings.json");
+        var envSettingsStream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"galaxy_cli.appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json");
+
+        if (baseSettingsStream != null) builder.AddJsonStream(baseSettingsStream);
+        if (envSettingsStream != null) builder.AddJsonStream(envSettingsStream);
 
         return builder.Build();
     }
@@ -48,6 +56,20 @@ class Program
     private static ServiceCollection ConfigureServices(IConfiguration configuration)
     {
         var serviceCollection = new ServiceCollection();
+
+        serviceCollection.AddLogging(builder =>
+            {
+                // builder.ClearProviders();
+                // builder.AddConfiguration(configuration.GetSection("Logging"));
+                // builder.AddConsole();
+                // builder.SetMinimumLevel(LogLevel.None);
+                // // #if DEBUG
+                // //     builder.SetMinimumLevel(LogLevel.Debug);
+                // // #else
+                // //     builder.SetMinimumLevel(LogLevel.Information);
+                // // #endif
+            });
+
         serviceCollection.AddHttpClient();
 
         serviceCollection.AddHttpClient("BaseApiService")
@@ -63,8 +85,10 @@ class Program
         serviceCollection.AddSingleton<IAuthService, GoogleAuthService>();
         serviceCollection.AddSingleton<IBackendAuthService, BackendAuthService>();
         serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
-        serviceCollection.AddTransient<ICrewsService, CrewsService>();
+        serviceCollection.AddSingleton<ICrewsService, CrewsService>();
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
+        serviceCollection.AddSingleton<IMissionService, MissionService>();
+        serviceCollection.AddSingleton<IUserService, UserService>();
 
         return serviceCollection;
     }
@@ -90,22 +114,24 @@ class Program
 
             config.AddBranch("crew", crew =>
             {
-                crew.SetDescription("Manage your ship crew.");
+                crew.SetDescription("Manage your crew.");
                 crew.AddCommand<CrewListCommand>("list");
                 crew.AddCommand<CrewDetailCommand>("details");
                 crew.AddCommand<CrewAssignCommand>("assign");
                 crew.AddCommand<CrewCreateCommand>("create");
+                crew.AddCommand<CrewFireCommand>("fire");
             });
 
             config.AddBranch("missions", mission =>
             {
                 mission.SetDescription("View and manage missions.");
-                mission.AddCommand<MissionListCommand>("list");
-                mission.AddCommand<MissionDetailCommand>("detail");
-                mission.AddCommand<MissionAcceptCommand>("accept");
-                mission.AddCommand<MissionAbortCommand>("abort");
-                mission.AddCommand<MissionLaunchCommand>("launch");
+                mission.AddCommand<MissionListCommand>("list-all");
+                mission.AddCommand<MissionCreateCommand>("create");
+                mission.AddCommand<MissionUpdateCommand>("update");
                 mission.AddCommand<MissionsAssignCommand>("assign");
+                mission.AddCommand<MissionUpdateStatusCommand>("update-status");
+                mission.AddCommand<MissionReportCommand>("report");
+                mission.AddCommand<MissionGetByIdCommand>("list");
             });
 
             config.AddBranch("planets", planet =>
@@ -114,6 +140,15 @@ class Program
                 planet.AddCommand<PlanetAddCommand>("add");
                 planet.AddCommand<PlanetListCommand>("list");
                 planet.AddCommand<PlanetUpdateCommand>("update");
+            });
+
+            config.AddBranch("users", users =>
+            {
+                users.SetDescription("View and manage users.");
+                users.AddCommand<UserListCommand>("list-all");
+                users.AddCommand<UserGetByIdCommand>("list");
+                users.AddCommand<UserDeactivateCommand>("deactivate");
+                users.AddCommand<UserAssignRankCommand>("assign");
             });
 
         });

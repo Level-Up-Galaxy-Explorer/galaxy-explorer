@@ -6,5 +6,5 @@ public class UpdateCrewMembersDto
 {
     [Required]
     [MinLength(1, ErrorMessage = "At least one user ID must be provided.")]
-    public List<int> UserIds { get; set; } = new List<int>();
+    public List<int> UserIds { get; set; } = [];
 }

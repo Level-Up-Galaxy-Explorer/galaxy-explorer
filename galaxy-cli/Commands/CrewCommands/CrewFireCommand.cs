@@ -1,50 +1,37 @@
 using System.ComponentModel;
 using galaxy_cli.Commands.Base;
-using galaxy_cli.DTO;
 using galaxy_cli.DTO.Crews;
-using galaxy_cli.Models;
 using galaxy_cli.Services;
-using galaxy_cli.Settings;
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
 namespace galaxy_cli.Commands.CrewCommands;
 
-[Description("Assign user to a crew")]
-public class CrewAssignCommand : BaseApiCommand<ManageCrewSettings>
+[Description("Fire user to a crew")]
+public class CrewFireCommand : BaseApiCommand<ManageCrewSettings>
 {
+
     private readonly ICrewsService _crewService;
-    private readonly IUserService _userService;
 
-    public CrewAssignCommand(ICrewsService crewsService, IUserService userService, ILogger<CrewAssignCommand> logger) : base(logger)
+    public CrewFireCommand(ICrewsService crewService, ILogger<CrewFireCommand> logger) : base(logger)
     {
-        _crewService = crewsService;
-        _userService = userService;
-
+        _crewService = crewService;
     }
 
     protected override async Task<int> ExecuteApiLogic(CommandContext context, ManageCrewSettings settings)
     {
-
         var selectedCredId = settings.CrewId;
         var selectedUserId = settings.UserId;
 
         IEnumerable<int> selectedUserIds = [];
 
+        List<CrewSummaryDTO> crewItems = [];
+
         if (!settings.CrewId.HasValue)
         {
 
-            List<CrewSummaryDTO>? crewItems = [];
-
-            await AnsiConsole.Status()
-            .StartAsync("Calling API...", async ctx =>
-            {
-                ctx.Status("Processing...");
-                crewItems = await _crewService.GetAllCrewsAsync();
-            });
-
-
+            crewItems = await GetCrew() ?? [];
 
             if (crewItems.Count != 0)
             {
@@ -57,7 +44,6 @@ public class CrewAssignCommand : BaseApiCommand<ManageCrewSettings>
                         .AddChoices(crewItems).UseConverter(s => s.Name));
 
                 selectedCredId = crew.Crew_Id;
-                AnsiConsole.MarkupLine($"You selected the [yellow]{crew.Name}[/] crew.");
 
             }
             else
@@ -70,28 +56,25 @@ public class CrewAssignCommand : BaseApiCommand<ManageCrewSettings>
 
         if (!settings.UserId.HasValue)
         {
-            IEnumerable<UserDTO>? users = [];
-
-            await AnsiConsole.Status()
-            .StartAsync("Calling API...", async ctx =>
+            if (crewItems.Count == 0)
             {
-                ctx.Status("Processing...");
-                users = await _userService.GetUsersAsync();
-            });
+                crewItems = await GetCrew() ?? [];
+            }
+
+            var crew = crewItems.Where(c => c.Crew_Id == selectedCredId).FirstOrDefault();
 
 
-
-            if (users.Any())
+            if (crew != null && crew.Members.Count != 0)
             {
 
                 var user = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<UserDTO>()
-                    .Title("Choose user to add:")
+                new MultiSelectionPrompt<UserSummaryDTO>()
+                    .Title("Choose user(s) to remove:")
                     .PageSize(5)
                     .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")
                     .InstructionsText("[grey](Press [blue]<space>[/] to select a user, [green]<enter>[/] to accept)[/]")
-                    .AddChoices(users)
-                    .UseConverter(s => $" {s.Full_Name} ({((s.Is_Active ?? false) ? "[green]available[/]" : "[grey]not available[/]")}) "));
+                    .AddChoices(crew.Members)
+                    .UseConverter(s => $" {s.Full_Name} "));
 
                 selectedUserIds = user.Select(u => u.User_Id);
 
@@ -106,11 +89,32 @@ public class CrewAssignCommand : BaseApiCommand<ManageCrewSettings>
 
         if (selectedCredId != null)
         {
-
-            await _crewService.AddCrewMembers(selectedCredId ?? -1, new UpdateCrewMembersDto(selectedUserIds.ToList()));
+            await _crewService.RemoveCrewMembers(selectedCredId ?? -1, new UpdateCrewMembersDto(selectedUserIds.ToList()));
+            AnsiConsole.MarkupLine($"[green]Users have been successfully removed from the crew.[/]");
+        }
+        else
+        {
+            AnsiConsole.MarkupLine($"[red]Error: Crew id is required. Please provide a crew id using --crewId flag or by selecting from list.[/]");
         }
 
         return 0;
 
     }
+
+    async Task<List<CrewSummaryDTO>?> GetCrew()
+    {
+        List<CrewSummaryDTO>? crewItems = [];
+
+        await AnsiConsole.Status()
+        .StartAsync("Calling API...", async ctx =>
+        {
+            ctx.Status("Processing...");
+            crewItems = await _crewService.GetAllCrewsAsync();
+            AnsiConsole.MarkupLine($"[green]API call successful[/]");
+        });
+
+        return crewItems;
+
+    }
+
 }
