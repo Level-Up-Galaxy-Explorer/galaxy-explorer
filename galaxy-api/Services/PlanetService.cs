@@ -49,6 +49,7 @@ namespace galaxy_api.Services
         {
             return new PlanetDTO
             {
+                Id = planet.Id,
                 Name = planet.Name,
                 Galaxy = planet.Galaxy,
                 PlanetType = planet.PlanetType,
@@ -61,6 +62,7 @@ namespace galaxy_api.Services
         {
             return new Planet
             {
+                Id = planetDto.Id,
                 Name = planetDto.Name,
                 Galaxy = planetDto.Galaxy,
                 PlanetType = planetDto.PlanetType,
