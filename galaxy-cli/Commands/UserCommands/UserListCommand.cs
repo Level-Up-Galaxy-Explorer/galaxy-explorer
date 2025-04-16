@@ -2,7 +2,7 @@ using System.ComponentModel;
 using galaxy_cli.Services;
 using Spectre.Console;
 using Spectre.Console.Cli;
-using galaxy_api.Models;
+using galaxy_cli.DTO;
 
 namespace galaxy_cli.Commands.UserCommands;
 

@@ -8,7 +8,7 @@ using galaxy_cli.Settings;
 namespace galaxy_cli.Commands.MissionCommands;
 
 [Description("Displays details for a specific mission by ID.")]
-public class MissionGetByIdCommand : Command<IdentifierSettings>
+public class MissionGetByIdCommand : Command<IdSettings>
 {
     private readonly IMissionService _missionService;
 
@@ -17,7 +17,7 @@ public class MissionGetByIdCommand : Command<IdentifierSettings>
         _missionService = missionService;
     }
 
-    public override int Execute(CommandContext context, IdentifierSettings settings)
+    public override int Execute(CommandContext context, IdSettings settings)
     {
         var missionId = settings.Id != 0
             ? settings.Id

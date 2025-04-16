@@ -47,8 +47,8 @@ class Program
         var baseSettingsStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("galaxy_cli.appsettings.json");
         var envSettingsStream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"galaxy_cli.appsettings.{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development"}.json");
 
-        if (baseSettingsStream != null) configurationBuilder.AddJsonStream(baseSettingsStream);
-        if (envSettingsStream != null) configurationBuilder.AddJsonStream(envSettingsStream);
+        if (baseSettingsStream != null) builder.AddJsonStream(baseSettingsStream);
+        if (envSettingsStream != null) builder.AddJsonStream(envSettingsStream);
 
         return builder.Build();
     }

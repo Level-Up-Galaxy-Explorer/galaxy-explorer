@@ -2,13 +2,13 @@ using System.ComponentModel;
 using Spectre.Console;
 using Spectre.Console.Cli;
 using galaxy_cli.Services;
-using galaxy_api.Models;
+using galaxy_cli.DTO;
 using galaxy_cli.Settings;
 
 namespace galaxy_cli.Commands.UserCommands;
 
 [Description("Displays details for a specific user by ID.")]
-public class UserGetByIdCommand : Command<IdentifierSettings>
+public class UserGetByIdCommand : Command<IdSettings>
 {
     private readonly IUserService _userService;
 
@@ -17,7 +17,7 @@ public class UserGetByIdCommand : Command<IdentifierSettings>
         _userService = userService;
     }
 
-    public override int Execute(CommandContext context, IdentifierSettings settings)
+    public override int Execute(CommandContext context, IdSettings settings)
     {
         var userId = settings.Id != 0
             ? settings.Id

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using galaxy_cli.Commands.Base;
 using galaxy_cli.DTO.Crews;
+using galaxy_cli.DTO;
 using galaxy_cli.Models;
 using galaxy_cli.Services;
 using galaxy_cli.Settings;
@@ -25,7 +26,7 @@ public class CrewCreateCommand : BaseApiCommand<EmptyCommandSetting>
     protected override async Task<int> ExecuteApiLogic(CommandContext context, EmptyCommandSetting settings)
     {
 
-        List<Users>? users = [];
+        IEnumerable<UserDTO>? users = [];
 
         var crew_name = AnsiConsole.Prompt(
             new TextPrompt<string>("Enter a crew name.")
@@ -42,7 +43,7 @@ public class CrewCreateCommand : BaseApiCommand<EmptyCommandSetting>
         .StartAsync("Calling API...", async ctx =>
         {
             ctx.Status("Processing...");
-            users = await _userService.GetAllUsersAsync();
+            users = await _userService.GetUsersAsync();
         });
 
 
@@ -51,11 +52,11 @@ public class CrewCreateCommand : BaseApiCommand<EmptyCommandSetting>
         );
 
 
-        if (users.Count != 0)
+        if (users.Any())
         {
 
             var user = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<Users>()
+                new MultiSelectionPrompt<UserDTO>()
                     .Title("Choose user to add:")
                     .PageSize(5)
                     .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")

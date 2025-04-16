@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using galaxy_cli.Commands.Base;
+using galaxy_cli.DTO;
 using galaxy_cli.DTO.Crews;
 using galaxy_cli.Models;
 using galaxy_cli.Services;
@@ -69,22 +70,22 @@ public class CrewAssignCommand : BaseApiCommand<ManageCrewSettings>
 
         if (!settings.UserId.HasValue)
         {
-            List<Users>? users = [];
+            IEnumerable<UserDTO>? users = [];
 
             await AnsiConsole.Status()
             .StartAsync("Calling API...", async ctx =>
             {
                 ctx.Status("Processing...");
-                users = await _userService.GetAllUsersAsync();
+                users = await _userService.GetUsersAsync();
             });
 
 
 
-            if (users.Count != 0)
+            if (users.Any())
             {
 
                 var user = AnsiConsole.Prompt(
-                new MultiSelectionPrompt<Users>()
+                new MultiSelectionPrompt<UserDTO>()
                     .Title("Choose user to add:")
                     .PageSize(5)
                     .MoreChoicesText("[grey](Move up and down to reveal more users)[/]")

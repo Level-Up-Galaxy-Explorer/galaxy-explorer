@@ -1,9 +1,10 @@
 using System.Text.Json;
-using galaxy_api.Models;
+using galaxy_cli.DTO;
 using Microsoft.Extensions.Options;
 using galaxy_cli.Services.Base;
 using Spectre.Console;
-
+using galaxy_cli.Services;
+using Microsoft.Extensions.Logging;
 
 namespace galaxy_cli.Services;
 
@@ -12,8 +13,8 @@ namespace galaxy_cli.Services;
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public UserService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings)
-            : base(httpClientFactory, apiSettings)
+        public UserService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, ILogger<MissionService> logger)
+            : base(httpClientFactory, apiSettings, logger)
         {
             _httpClient = this.CreateClient();
             _jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
@@ -119,11 +120,4 @@ namespace galaxy_cli.Services;
             }
         }
     }
-    public interface IUserService
-    {
-        Task<IEnumerable<UserDTO>> GetUsersAsync();
-        Task<UserDTO?> GetUserByIdAsync(int id);
-        Task<bool> AssignRankAsync(int userId, int rankId);
-        Task<bool> DeactivateUserAsync(int userId);
-        Task<bool> UpdateUserAsync(int id, UserDTO user);
-    }
+   
