@@ -35,7 +35,7 @@ CREATE TABLE Rank (
 
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,
-    full_name VARCHAR(64) NOT NULL UNIQUE,
+    full_name VARCHAR(64) NOT NULL,
     email_address VARCHAR(64) NOT NULL UNIQUE,
     google_id VARCHAR(255) NOT NULL UNIQUE,
     rank_id INT NOT NULL REFERENCES Rank(rank_id),
@@ -64,7 +64,7 @@ CREATE TABLE Missions (
     status_id INT NOT NULL REFERENCES Status(status_id),
     reward_credit VARCHAR(64),
     feedback VARCHAR(255),
-    created_by VARCHAR(64) NOT NULL REFERENCES Users(full_name)
+    created_by VARCHAR(64) NOT NULL REFERENCES Users(user_id)
 );
 
 CREATE TABLE Crew (

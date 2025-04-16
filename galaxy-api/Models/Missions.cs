@@ -9,7 +9,7 @@ namespace galaxy_api.Models
         public int Status_Id {get;set;}
         public string Reward_Credit {get;set;} = string.Empty;
         public string Feedback {get;set;} = string.Empty;
-        public string Created_By {get;set;} = string.Empty;
+        public int Created_By {get;set;}
         
     }
 }
