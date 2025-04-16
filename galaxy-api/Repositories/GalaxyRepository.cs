@@ -19,10 +19,11 @@ namespace galaxy_api.Repositories
                 SELECT 
                     g.galaxy_id,
                     g.name,
-                    g.galaxy_type_id,
+                    gt.name AS galaxy_type_name,
                     g.distance_from_earth,
                     g.description
-                FROM galaxy g";
+                FROM galaxy g
+                JOIN galaxy_type gt ON gt.galaxy_type_id = g.galaxy_type_id;";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             return await conn.QueryAsync<Galaxy>(query);
@@ -34,11 +35,12 @@ namespace galaxy_api.Repositories
                 SELECT 
                     g.galaxy_id,
                     g.name,
-                    g.galaxy_type_id,
+                    gt.name AS galaxy_type_name,
                     g.distance_from_earth,
                     g.description
                 FROM galaxy g
-                WHERE g.galaxy_id = @id";
+                JOIN galaxy_type gt ON gt.galaxy_type_id = g.galaxy_type_id
+                WHERE g.galaxy_id = @Id";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             return await conn.QueryFirstOrDefaultAsync<Galaxy>(query, new { id });
@@ -48,7 +50,11 @@ namespace galaxy_api.Repositories
         {
             const string query = @"
                 INSERT INTO galaxy (name, galaxy_type_id, distance_from_earth, description)
-                VALUES (@Name, @Galaxy_Type_Id, @Distance_From_Earth, @Description)";
+                VALUES (
+                @Name,
+                @Galaxy_Type_Id,
+                @DistanceFromEarth,
+                @Description)";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.ExecuteAsync(query, galaxy);
@@ -58,10 +64,11 @@ namespace galaxy_api.Repositories
         {
             const string query = @"
                 UPDATE galaxy
-                SET name = @Name,
-                    galaxy_type_id = @Galaxy_Type_Id,
-                    distance_from_earth = @Distance_From_Earth,
-                    description = @Description
+                SET
+                name = @Name,
+                galaxy_type_id = Galaxy_Type_Id,
+                distance_from_earth = @DistanceFromEarth,
+                description = @Description
                 WHERE galaxy_id = @Id";
 
             var parameters = new

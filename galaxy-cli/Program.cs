@@ -4,6 +4,7 @@ using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.Commands.PlanetCommands;
 using galaxy_cli.Commands.UserCommands;
+using galaxy_cli.Commands.GalaxyCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
 using galaxy_cli.Services;
@@ -89,6 +90,7 @@ class Program
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
         serviceCollection.AddSingleton<IMissionService, MissionService>();
         serviceCollection.AddSingleton<IUserService, UserService>();
+        serviceCollection.AddSingleton<IGalaxyService, GalaxyService>();
 
         return serviceCollection;
     }
@@ -149,10 +151,14 @@ class Program
                 users.AddCommand<UserAssignRankCommand>("assign");
             });
 
+            config.AddBranch("galaxy", galaxy =>
+            {
+                galaxy.SetDescription("View and manage galaxy.");
+                galaxy.AddCommand<GalaxyListCommand>("list");
+            });
+
         });
 
         return app;
-
     }
-
 }

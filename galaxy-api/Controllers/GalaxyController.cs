@@ -22,16 +22,7 @@ namespace galaxy_api.Controllers
         {
             var galaxies = await _galaxyService.GetAllGalaxyAsync();
 
-            var galaxy = galaxies.Select(g => new Galaxy
-            {
-                Galaxy_Id = g.Galaxy_Id,
-                Name = g.Name,
-                Galaxy_Type_Id = g.Galaxy_Type_Id, 
-                Distance_From_Earth = g.Distance_From_Earth,
-                Description = g.Description
-            });
-
-            return Ok(galaxy);
+            return Ok(galaxies);
         }
 
         [HttpGet("{id}")]
@@ -43,16 +34,7 @@ namespace galaxy_api.Controllers
                 return NotFound();
             }
 
-            var galaxyModel = new Galaxy
-            {
-                Galaxy_Id = galaxy.Galaxy_Id,
-                Name = galaxy.Name,
-                Galaxy_Type_Id = galaxy.Galaxy_Type_Id, 
-                Distance_From_Earth = galaxy.Distance_From_Earth,
-                Description = galaxy.Description
-            };
-
-            return Ok(galaxyModel);
+            return Ok(galaxy);
         }
 
         [HttpPost]
@@ -63,14 +45,6 @@ namespace galaxy_api.Controllers
                 return BadRequest("Galaxy data is required.");
             }
 
-            var galaxyModel = new Galaxy
-            {
-                Name = galaxy.Name,
-                Galaxy_Type_Id = galaxy.Galaxy_Type_Id,  
-                Distance_From_Earth = galaxy.Distance_From_Earth,
-                Description = galaxy.Description
-            };
-
             await _galaxyService.AddGalaxyAsync(galaxy);
 
             return CreatedAtAction(nameof(GetGalaxyById), new { id = galaxy.Galaxy_Id }, galaxy);
@@ -80,19 +54,14 @@ namespace galaxy_api.Controllers
         public async Task<ActionResult> UpdateGalaxy(int id, Galaxy galaxy)
         {
             var galaxyModel = await _galaxyService.GetGalaxyByIdAsync(id);
-            if (galaxy == null)
+            if (galaxyModel == null)
             {
                 return NotFound();
             }
 
-            galaxy.Name = galaxy.Name;
-            galaxy.Galaxy_Type_Id = galaxy.Galaxy_Type_Id; 
-            galaxy.Distance_From_Earth = galaxy.Distance_From_Earth;
-            galaxy.Description = galaxy.Description;
-
             await _galaxyService.UpdateGalaxyAsync(id, galaxy);
 
-            return Ok(galaxy);  
+            return Ok(galaxy);
         }
     }
 }

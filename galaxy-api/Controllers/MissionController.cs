@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using galaxy_api.Delegates;
 using galaxy_api.DTOs;
 using galaxy_api.Helpers;
@@ -15,12 +16,14 @@ namespace galaxy_api.Controllers
     {
         private readonly IMissionService _missionService;
         private readonly FeedbackValidator _feedbackValidator;
+        private readonly IUserService _userService;
 
 
-        public MissionController(IMissionService missionService)
+        public MissionController(IMissionService missionService, IUserService userService)
         {
             _missionService = missionService;
            _feedbackValidator = FeedbackValidation.IsValidFeedback;
+           _userService = userService;
 
         }
 
@@ -61,6 +64,9 @@ namespace galaxy_api.Controllers
         [HttpPost]
         public async Task<ActionResult<ApiResponse<Missions>>> CreateMission([FromBody] Missions mission)
         {
+            Claim nameIdentifierClaim = HttpContext.User.Claims.Where<Claim>(e => e.Type == ClaimTypes.NameIdentifier).First();
+            Users user = await _userService.GetUserByGoogleIdAsync(nameIdentifierClaim.Value);
+
             mission.Status_Id = 1;
             await _missionService.CreateMissionAsync(mission);
             return CreatedAtAction(nameof(GetMissionById), new { id = mission.Mission_Id }, new ApiResponse<Missions>
