@@ -134,10 +134,12 @@ class Program
                 mission.AddCommand<MissionGetByIdCommand>("list");
             });
 
-            config.AddBranch("planets", mission =>
+            config.AddBranch("planets", planet =>
             {
-                mission.SetDescription("View and manage planets.");
-                mission.AddCommand<PlanetListCommand>("list");
+                planet.SetDescription("View and manage planets.");
+                planet.AddCommand<PlanetAddCommand>("add");
+                planet.AddCommand<PlanetListCommand>("list");
+                planet.AddCommand<PlanetUpdateCommand>("update");
             });
 
             config.AddBranch("users", users =>
