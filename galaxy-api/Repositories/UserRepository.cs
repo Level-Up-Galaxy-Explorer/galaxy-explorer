@@ -79,14 +79,13 @@ namespace galaxy_api.Repositories
             const string query = @"
                 UPDATE users
                 SET 
-                    full_name = @Full_Name,
-                WHERE user_id = @id";
+                    full_name = @Full_Name
+                WHERE user_id = @Id";
 
             var parameters = new
             {
                 Id = id,
-                users.Full_Name,
-                users.Email_Address
+                users.Full_Name
             };
 
             await using var conn = new NpgsqlConnection(_connectionString);
