@@ -20,53 +20,26 @@ public class CrewListCommand : AsyncCommand<EmptyCommandSetting>
 
     public override async Task<int> ExecuteAsync(CommandContext context, EmptyCommandSetting settings)
     {
-        
+
         List<CrewSummaryDTO>? crewItems = [];
 
         await AnsiConsole.Status()
         .StartAsync("Calling API...", async ctx =>
         {
-            try
-            {
-                ctx.Status("Processing...");
-
-                crewItems = await _crewService.GetAllCrewsAsync();
-
-                if (crewItems == null)
-                {
-
-                    AnsiConsole.MarkupLine("[yellow]Could not deserialize API response.[/]");
-                }
-
-                AnsiConsole.MarkupLine($"[green]API call successful[/]");
-
-
-            }
-            catch (HttpRequestException ex)
-            {
-                AnsiConsole.MarkupLine($"[red]API Request Error:[/]");
-                AnsiConsole.MarkupLine($"[red]({ex.StatusCode?.ToString() ?? "N/A"}) {ex.Message}[/]");
-            }
-            catch (JsonException ex)
-            {
-                AnsiConsole.MarkupLine($"[red]JSON Deserialization Error: {ex.Message}[/]");
-            }
-            catch (Exception ex)
-            {
-                AnsiConsole.MarkupLine($"[red]An unexpected error occurred:[/]");
-                AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-            }
+            ctx.Status("Processing...");
+            crewItems = await _crewService.GetAllCrewsAsync();
+            AnsiConsole.MarkupLine($"[green]API call successful[/]");
         });
 
 
 
-        if (crewItems != null)
+        if (crewItems.Any())
         {
 
             var crew = AnsiConsole.Prompt(
                 new SelectionPrompt<CrewSummaryDTO>()
                     .Title("Choose a crew:")
-                    .PageSize(crewItems.Count)
+                    .PageSize(5)
                     .MoreChoicesText("[grey](Move up and down to reveal more crews)[/]")
                     .AddChoices(crewItems).UseConverter(s => s.Name));
 
