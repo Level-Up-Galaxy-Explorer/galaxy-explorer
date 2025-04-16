@@ -5,7 +5,7 @@ using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
-namespace galaxy_api.Services;
+namespace galaxy_api.Authentication;
 public class GoogleAuthProvider : IGoogleAuthProvider
 {
     private readonly IConfiguration _configuration;
@@ -99,7 +99,7 @@ public class GoogleAuthProvider : IGoogleAuthProvider
         return signingKeys;
     }
 
-    public async Task<ClaimsPrincipal?> ValidateGoogleIdTokenAsync(string idToken)
+    public ClaimsPrincipal? ValidateGoogleIdToken(string idToken)
     {
         try
         {
@@ -132,25 +132,12 @@ public class GoogleAuthProvider : IGoogleAuthProvider
         };
     }
 
-    public void addJwtBearerOptions(JwtBearerOptions options)
+    public void AddJwtBearerOptions(JwtBearerOptions options)
     {
-
         options.Authority = "https://accounts.google.com";
         options.Audience = _configuration["Authentication:Google:ClientId"];
         options.RequireHttpsMetadata = true;
         options.TokenValidationParameters = GetTokenValidationParameters();
-
-        options.Events = new JwtBearerEvents
-        {
-            OnTokenValidated = async context =>
-            {
-                var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier) ?? context.Principal?.FindFirst("sub");
-                if (userIdClaim != null)
-                {
-                    // add custom roles to principal claims?
-                }
-            }
-        };
     }
 
 }

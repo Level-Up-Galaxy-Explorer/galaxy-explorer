@@ -1,7 +1,10 @@
+using galaxy_api.Authentication;
 using galaxy_api.Repositories;
 using galaxy_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
+
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,13 +38,15 @@ builder.Services.AddScoped<galaxy_api.Services.IAuthorizationService, Authorizat
 builder.Services.AddHealthChecks()
        .AddCheck<DatabaseHealthCheck>("Database");
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-.AddJwtBearer(options =>
+builder.Services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
+
+builder.Services.AddAuthentication(options =>
 {
-    var serviceProvider = builder.Services.BuildServiceProvider();
-    var googleAuthProvider = serviceProvider.GetRequiredService<IGoogleAuthProvider>();
-    googleAuthProvider.addJwtBearerOptions(options);
-});
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer();
 
 builder.Services.AddAuthorization();
 builder.Services.AddHttpClient();
@@ -66,3 +71,4 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+
