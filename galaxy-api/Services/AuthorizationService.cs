@@ -14,7 +14,7 @@ class AuthorizationService : IAuthorizationService
         _userService = userService;
         _rankService = rankService;
     }
-    public async Task<bool> allowRequest(HttpContext httpContext, int[] allowedRanks)
+    public async Task<bool> AllowRequest(HttpContext httpContext, int[] allowedRanks)
     {
         Claim nameIdentifierClaim = httpContext.User.Claims.Where<Claim>(e => e.Type == ClaimTypes.NameIdentifier).First();
         Users user = await _userService.GetUserByGoogleIdAsync(nameIdentifierClaim.Value);
@@ -33,9 +33,9 @@ class AuthorizationService : IAuthorizationService
     }
 
 
-    public async Task<bool> denyRequest(HttpContext httpContext, int[] allowedRanks)
+    public async Task<bool> DenyRequest(HttpContext httpContext, int[] allowedRanks)
     {
-        return !(await allowRequest(httpContext, allowedRanks));
+        return !(await AllowRequest(httpContext, allowedRanks));
     }
 
 }
