@@ -33,7 +33,7 @@ public class MissionListCommand : Command<EmptyCommandSettings>
                     mission.Status_Id.ToString(),
                     mission.Launch_Date.ToString("yyyy-MM-dd"),
                     mission.Destination_Planet_Id.ToString(),
-                    mission.Created_By ?? "",
+                    mission.Created_By.ToString(),
                     string.IsNullOrWhiteSpace(mission.Reward_Credit) ? "[grey]N/A[/]" : mission.Reward_Credit ?? "",
                     string.IsNullOrWhiteSpace(mission.Feedback) ? "[grey]N/A[/]" : mission.Feedback ?? ""
                 );

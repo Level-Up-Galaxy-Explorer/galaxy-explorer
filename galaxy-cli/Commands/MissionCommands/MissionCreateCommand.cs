@@ -32,7 +32,7 @@ public class MissionCreateCommand : Command<EmptyCommandSettings>
                         : ValidationResult.Error("[red]Invalid date[/]");
                 })
         );
-        var createdBy = AnsiConsole.Ask<string>("Enter the [green]creator name[/]:");
+        var createdBy = AnsiConsole.Ask<int>("Enter the [green]creator ID[/]:");
 
         var mission = new MissionDTO
         {

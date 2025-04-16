@@ -38,7 +38,7 @@ public class MissionGetByIdCommand : Command<IdSettings>
         table.AddRow("Status ID", mission.Status_Id.ToString());
         table.AddRow("Launch Date", mission.Launch_Date.ToString("yyyy-MM-dd"));
         table.AddRow("Destination Planet ID", mission.Destination_Planet_Id.ToString());
-        table.AddRow("Created By", mission.Created_By ?? "");
+        table.AddRow("Created By", mission.Created_By.ToString());
         table.AddRow("Reward Credit", string.IsNullOrWhiteSpace(mission.Reward_Credit) ? "[grey]N/A[/]" : mission.Reward_Credit ?? "");
         table.AddRow("Feedback", string.IsNullOrWhiteSpace(mission.Feedback) ? "[grey]N/A[/]" : mission.Feedback ?? "");
 
