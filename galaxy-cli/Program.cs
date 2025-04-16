@@ -2,6 +2,7 @@
 using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.Commands.PlanetCommands;
+using galaxy_cli.Commands.UserCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
 using galaxy_cli.Services;
@@ -80,6 +81,7 @@ class Program
         serviceCollection.AddSingleton<ITokenStore, CredentialManagerTokenStore>();
         serviceCollection.AddSingleton<ICrewsService, CrewsService>();
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
+        serviceCollection.AddSingleton<IMissionService, MissionService>();
         serviceCollection.AddSingleton<IUserService, UserService>();
 
         return serviceCollection;
@@ -117,18 +119,28 @@ class Program
             config.AddBranch("missions", mission =>
             {
                 mission.SetDescription("View and manage missions.");
-                mission.AddCommand<MissionListCommand>("list");
-                mission.AddCommand<MissionDetailCommand>("detail");
-                mission.AddCommand<MissionAcceptCommand>("accept");
-                mission.AddCommand<MissionAbortCommand>("abort");
-                mission.AddCommand<MissionLaunchCommand>("launch");
+                mission.AddCommand<MissionListCommand>("list-all");
+                mission.AddCommand<MissionCreateCommand>("create");
+                mission.AddCommand<MissionUpdateCommand>("update");
                 mission.AddCommand<MissionsAssignCommand>("assign");
+                mission.AddCommand<MissionUpdateStatusCommand>("update-status");
+                mission.AddCommand<MissionReportCommand>("report");
+                mission.AddCommand<MissionGetByIdCommand>("list");
             });
 
             config.AddBranch("planets", mission =>
             {
                 mission.SetDescription("View and manage planets.");
                 mission.AddCommand<PlanetListCommand>("list");
+            });
+
+            config.AddBranch("users", users =>
+            {
+                users.SetDescription("View and manage users.");
+                users.AddCommand<UserListCommand>("list-all");
+                users.AddCommand<UserGetByIdCommand>("list");
+                users.AddCommand<UserDeactivateCommand>("deactivate");
+                users.AddCommand<UserAssignRankCommand>("assign");
             });
 
         });
