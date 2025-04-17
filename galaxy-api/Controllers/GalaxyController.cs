@@ -11,10 +11,12 @@ namespace galaxy_api.Controllers
     public class GalaxyController : ControllerBase
     {
         private readonly IGalaxyService _galaxyService;
+        private readonly ILogger<GalaxyController> _logger;
 
-        public GalaxyController(IGalaxyService galaxyService)
+        public GalaxyController(IGalaxyService galaxyService, ILogger<GalaxyController> logger)
         {
             _galaxyService = galaxyService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -22,16 +24,7 @@ namespace galaxy_api.Controllers
         {
             var galaxies = await _galaxyService.GetAllGalaxyAsync();
 
-            var galaxy = galaxies.Select(g => new Galaxy
-            {
-                Galaxy_Id = g.Galaxy_Id,
-                Name = g.Name,
-                Galaxy_Type_Id = g.Galaxy_Type_Id, 
-                Distance_From_Earth = g.Distance_From_Earth,
-                Description = g.Description
-            });
-
-            return Ok(galaxy);
+            return Ok(galaxies);
         }
 
         [HttpGet("{id}")]
@@ -40,19 +33,19 @@ namespace galaxy_api.Controllers
             var galaxy = await _galaxyService.GetGalaxyByIdAsync(id);
             if (galaxy == null)
             {
+                _logger.LogWarning("Galaxy with ID {Id} not found", id);
                 return NotFound();
             }
 
-            var galaxyModel = new Galaxy
-            {
-                Galaxy_Id = galaxy.Galaxy_Id,
-                Name = galaxy.Name,
-                Galaxy_Type_Id = galaxy.Galaxy_Type_Id, 
-                Distance_From_Earth = galaxy.Distance_From_Earth,
-                Description = galaxy.Description
-            };
+            _logger.LogInformation("Found galaxy: {@Galaxy}", galaxy);
+            return Ok(galaxy);
+        }
 
-            return Ok(galaxyModel);
+        [HttpGet("types")]
+        public async Task<ActionResult<IEnumerable<string>>> GetGalaxyTypes()
+        {
+            var types = await _galaxyService.GetGalaxyTypesAsync();
+            return Ok(types);
         }
 
         [HttpPost]
@@ -63,14 +56,6 @@ namespace galaxy_api.Controllers
                 return BadRequest("Galaxy data is required.");
             }
 
-            var galaxyModel = new Galaxy
-            {
-                Name = galaxy.Name,
-                Galaxy_Type_Id = galaxy.Galaxy_Type_Id,  
-                Distance_From_Earth = galaxy.Distance_From_Earth,
-                Description = galaxy.Description
-            };
-
             await _galaxyService.AddGalaxyAsync(galaxy);
 
             return CreatedAtAction(nameof(GetGalaxyById), new { id = galaxy.Galaxy_Id }, galaxy);
@@ -80,19 +65,14 @@ namespace galaxy_api.Controllers
         public async Task<ActionResult> UpdateGalaxy(int id, Galaxy galaxy)
         {
             var galaxyModel = await _galaxyService.GetGalaxyByIdAsync(id);
-            if (galaxy == null)
+            if (galaxyModel == null)
             {
                 return NotFound();
             }
 
-            galaxy.Name = galaxy.Name;
-            galaxy.Galaxy_Type_Id = galaxy.Galaxy_Type_Id; 
-            galaxy.Distance_From_Earth = galaxy.Distance_From_Earth;
-            galaxy.Description = galaxy.Description;
-
             await _galaxyService.UpdateGalaxyAsync(id, galaxy);
 
-            return Ok(galaxy);  
+            return Ok(galaxy);
         }
     }
 }

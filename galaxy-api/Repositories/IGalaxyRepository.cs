@@ -8,5 +8,6 @@ namespace galaxy_api.Repositories
         Task<Galaxy?> GetGalaxyByIdAsync(int id);
         Task AddGalaxyAsync(Galaxy galaxy);
         Task UpdateGalaxyAsync(int id, Galaxy galaxy);
+        Task<IEnumerable<string>> GetGalaxyTypesAsync();
     }
 }

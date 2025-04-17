@@ -10,8 +10,7 @@ public class IdentifierSettings : CommandSettings
     [Description("The unique ID or name of the target item (system, planet, crew, mission, etc.).")]
     [CommandArgument(0, "[id]")]
 
-    public int Id { get; set; }
-    // public required string Identifier { get; set; } = string.Empty;                                                      
+    public int Id { get; set; }                                                
     public int? Identifier { get; set; } 
 
     public override ValidationResult Validate()

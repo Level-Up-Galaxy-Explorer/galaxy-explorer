@@ -40,5 +40,10 @@ namespace galaxy_api.Services
         {
             await _repository.UpdateGalaxyAsync(id, galaxy);
         }
+
+        public async Task<IEnumerable<string>> GetGalaxyTypesAsync()
+        {
+            return await _repository.GetGalaxyTypesAsync();
+        }
     }
 }

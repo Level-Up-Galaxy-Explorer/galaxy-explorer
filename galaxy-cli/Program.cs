@@ -4,6 +4,7 @@ using galaxy_cli.Commands.CrewCommands;
 using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.Commands.PlanetCommands;
 using galaxy_cli.Commands.UserCommands;
+using galaxy_cli.Commands.GalaxyCommands;
 using galaxy_cli.DI;
 using galaxy_cli.Runner;
 using galaxy_cli.Services;
@@ -89,6 +90,7 @@ class Program
         serviceCollection.AddSingleton<IPlanetService, PlanetService>();
         serviceCollection.AddSingleton<IMissionService, MissionService>();
         serviceCollection.AddSingleton<IUserService, UserService>();
+        serviceCollection.AddSingleton<IGalaxyService, GalaxyService>();
 
         return serviceCollection;
     }
@@ -130,11 +132,9 @@ class Program
                 mission.AddCommand<MissionListCommand>("list-all");
                 mission.AddCommand<MissionCreateCommand>("create");
                 mission.AddCommand<MissionUpdateCommand>("update");
-                mission.AddCommand<MissionsAssignCommand>("assign");
                 mission.AddCommand<MissionUpdateStatusCommand>("update-status");
                 mission.AddCommand<MissionReportCommand>("report");
-                mission.AddCommand<MissionGetByIdCommand>("list");
-                
+                mission.AddCommand<MissionGetByIdCommand>("list-id");
             });
 
             config.AddBranch("planets", planet =>
@@ -149,15 +149,22 @@ class Program
             {
                 users.SetDescription("View and manage users.");
                 users.AddCommand<UserListCommand>("list-all");
-                users.AddCommand<UserGetByIdCommand>("list");
+                users.AddCommand<UserGetByIdCommand>("list-id");
                 users.AddCommand<UserDeactivateCommand>("deactivate");
                 users.AddCommand<UserAssignRankCommand>("assign");
+            });
+
+            config.AddBranch("galaxy", galaxy =>
+            {
+                galaxy.SetDescription("View and manage galaxies.");
+                galaxy.AddCommand<GalaxyListCommand>("list-all");
+                galaxy.AddCommand<GalaxyGetByIdCommand>("list-id");
+                galaxy.AddCommand<GalaxyAddCommand>("add");
+                galaxy.AddCommand<GalaxyUpdateCommand>("update");
             });
 
         });
 
         return app;
-
     }
-
 }
