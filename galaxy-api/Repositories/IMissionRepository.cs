@@ -21,5 +21,6 @@ namespace galaxy_api.Repositories
 
         Task<ErrorOr<Success>> AssignCrewToMissionAsync(int missionId, int crewId);
 
+        Task<ErrorOr<Success>> UpdateMissionsStatusAsync(int id, int crewId, MissionStatusUpdateDto missions);
     }
 }

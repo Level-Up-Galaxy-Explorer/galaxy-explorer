@@ -136,6 +136,9 @@ class Program
                 mission.AddCommand<MissionUpdateStatusCommand>("update-status");
                 mission.AddCommand<MissionReportCommand>("report");
                 mission.AddCommand<MissionGetByIdCommand>("list-id");
+                mission.AddCommand<MissionDetailsWithHistory>("history");
+                mission.AddCommand<AssignMissionToCrew>("assign");
+                
             });
 
             config.AddBranch("planets", planet =>

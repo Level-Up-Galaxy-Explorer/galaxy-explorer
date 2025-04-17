@@ -18,5 +18,7 @@ namespace galaxy_api.Services
         Task<ErrorOr<MissionDetailsWithCrewHistoryDTO>> GetMissionDetailsWithCrewHistoryAsync(int missionId);
         Task<ErrorOr<Success>> AssignCrewToMissionAsync(int missionId, int crewId);
 
+        Task<ErrorOr<Success>> UpdateMissionsStatusAsync(int missionId, int crewId, MissionStatusUpdateDto missions);
+
     }
 }

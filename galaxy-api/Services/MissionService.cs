@@ -72,5 +72,10 @@ namespace galaxy_api.Services
         {
             return await _repository.AssignCrewToMissionAsync(missionId, crewId);
         }
+
+        public async Task<ErrorOr<Success>> UpdateMissionsStatusAsync(int missionId, int crewId, MissionStatusUpdateDto missions)
+        {
+            return await _repository.UpdateMissionsStatusAsync(missionId, crewId, missions);
+        }
     }
 }

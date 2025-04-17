@@ -2,10 +2,12 @@ using System.Text.Json;
 using galaxy_api.DTOs;
 using galaxy_cli.Services.Base;
 using Microsoft.Extensions.Options;
-using System.Text; 
-using Spectre.Console; 
+using System.Text;
+using Spectre.Console;
 using galaxy_cli.Services;
 using Microsoft.Extensions.Logging;
+using galaxy_cli.DTO.Missions;
+using galaxy_api.DTOs.Missions;
 
 namespace galaxy_cli.Services;
 
@@ -14,7 +16,7 @@ public sealed class MissionService : BaseApiService, IMissionService
     private readonly HttpClient _httpClient;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public MissionService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, ILogger<MissionService> logger) 
+    public MissionService(IHttpClientFactory httpClientFactory, IOptions<ApiSettings> apiSettings, ILogger<MissionService> logger)
         : base(httpClientFactory, apiSettings, logger)
     {
         _jsonOptions = new JsonSerializerOptions
@@ -76,7 +78,7 @@ public sealed class MissionService : BaseApiService, IMissionService
         return null;
     }
 
-    public async Task <bool>CreateMissionAsync(MissionDTO mission)
+    public async Task<bool> CreateMissionAsync(MissionDTO mission)
     {
         var jsonContent = JsonSerializer.Serialize(mission, _jsonOptions);
         var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
@@ -178,6 +180,16 @@ public sealed class MissionService : BaseApiService, IMissionService
         Console.WriteLine(errorContent);
         return new List<MissionStatusReport>();
     }
+
+    public async Task<MissionDetailsWithCrewHistoryDTO> GetMissionDetailsWithCrewHistory(int missionId)
+    {
+        return await GetAndDeserializeAsync<MissionDetailsWithCrewHistoryDTO>($"{missionId}/history");
+    }
+
+    public async Task AssignCrewToMission(int missionId, AssignCrewRequest assignCrew)
+    {
+        await PostAsync(assignCrew, $"{missionId}/assign-crew");
+    }
 }
 
 public interface IMissionService
@@ -188,5 +200,9 @@ public interface IMissionService
     Task<bool> UpdateMissionDetailsAsync(int id, MissionDTO mission);
     Task<bool> UpdateMissionStatusAsync(int id, int statusId, string? feedback = null, string? rewardCredit = null);
     Task<IEnumerable<MissionStatusReport>> GetMissionStatusReportAsync(string? missionType, string? status, string? groupBy);
+
+    Task<MissionDetailsWithCrewHistoryDTO> GetMissionDetailsWithCrewHistory(int missionId);
+
+    Task AssignCrewToMission(int missionId, AssignCrewRequest assignCrew);
 }
 
