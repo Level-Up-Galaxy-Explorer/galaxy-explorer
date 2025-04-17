@@ -3,6 +3,7 @@ using System.ComponentModel;
 using galaxy_api.DTOs;
 using galaxy_api.DTOs.Missions;
 using galaxy_cli.Commands.Base;
+using galaxy_cli.Commands.MissionCommands;
 using galaxy_cli.Commands.UserCommands;
 using galaxy_cli.DTO.Crews;
 using galaxy_cli.Services;
@@ -17,7 +18,7 @@ public class AssignMissionToCrew : BaseApiCommand<IdentifierSettings>
     private readonly ICrewsService _crewService;
 
 
-    public AssignMissionToCrew(IMissionService missionService, ICrewsService crewsService, ILogger<AssignMissionToCrew> logger) : base(logger)
+    public AssignMissionToCrew(IMissionService missionService, ICrewsService crewsService, ILogger<MissionDetailsWithHistory> logger) : base(logger)
     {
         _missionService = missionService;
         _crewService = crewsService;
@@ -25,7 +26,7 @@ public class AssignMissionToCrew : BaseApiCommand<IdentifierSettings>
 
     protected override async Task<int> ExecuteApiLogic(CommandContext context, IdentifierSettings settings)
     {
-        var missions = _missionService.GetMissionsAsync().GetAwaiter().GetResult().Where(m => m.Status_Id == 1);
+        var missions = _missionService.GetMissionsAsync().GetAwaiter().GetResult().Where(m => m.Status_Type == "Planned");
 
         if (!missions.Any())
         {
@@ -49,7 +50,6 @@ public class AssignMissionToCrew : BaseApiCommand<IdentifierSettings>
         {
             ctx.Status("Processing...");
             crewItems = await _crewService.GetAllCrewsAsync();
-            AnsiConsole.MarkupLine($"[green]API call successful[/]");
         });
 
         var availableCrews = crewItems.Where(c => c.Is_Available = true);
@@ -69,6 +69,7 @@ public class AssignMissionToCrew : BaseApiCommand<IdentifierSettings>
 
         await AnsiConsole.Status().StartAsync("Calling API...", async ctx =>
         {
+
             ctx.Status("Processing...");
             await _missionService.AssignCrewToMission(mission.Mission_Id, new AssignCrewRequest(crew.Crew_Id));
             AnsiConsole.MarkupLine($"[green]Crew {crew.Name} successfully assign to mission {mission.Name}.[/]");

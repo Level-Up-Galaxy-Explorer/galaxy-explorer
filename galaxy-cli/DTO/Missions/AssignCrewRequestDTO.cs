@@ -4,8 +4,6 @@ namespace galaxy_api.DTOs.Missions;
 
 public class AssignCrewRequest
 {
-    private int crew_Id;
-
     [Required]    
     public int CrewId { get; set; }
 
@@ -19,6 +17,6 @@ public class AssignCrewRequest
 
     public AssignCrewRequest(int crew_Id)
     {
-        this.crew_Id = crew_Id;
+        CrewId = crew_Id;
     }
 }

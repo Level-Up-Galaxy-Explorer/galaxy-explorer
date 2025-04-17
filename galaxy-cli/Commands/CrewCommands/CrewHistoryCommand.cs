@@ -111,7 +111,7 @@ public class CrewMissionHistoryCommand : BaseApiCommand<IdSettings>
                 }
                 else
                 {
-                    simple.Caption($"[grey]Seens this crew isn't interested in doing missions.[/]");
+                    simple.Caption($"[grey]Seems this crew isn't interested in doing missions.[/]");
                 }
 
 

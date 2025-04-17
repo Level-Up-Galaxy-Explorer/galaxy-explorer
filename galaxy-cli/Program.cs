@@ -136,6 +136,7 @@ class Program
                 mission.AddCommand<MissionReportCommand>("report");
                 mission.AddCommand<MissionGetByIdCommand>("list-id");
                 mission.AddCommand<MissionDetailsWithHistory>("history");
+                mission.AddCommand<AssignMissionToCrew>("assign");
                 
             });
 

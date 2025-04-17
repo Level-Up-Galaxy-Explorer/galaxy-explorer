@@ -29,6 +29,7 @@ namespace galaxy_api.Repositories
         {
             const string query = @"
                 SELECT 
+                    m.mission_id,
                     m.name,
                     mt.name AS mission_type,
                     m.launch_date,
@@ -562,6 +563,7 @@ namespace galaxy_api.Repositories
             }
             catch (Exception ex)
             {
+                
                 return DomainErrros.Database.Unexpected(ex.Message);
             }
 
