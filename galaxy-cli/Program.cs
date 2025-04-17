@@ -134,6 +134,7 @@ class Program
                 mission.AddCommand<MissionUpdateStatusCommand>("update-status");
                 mission.AddCommand<MissionReportCommand>("report");
                 mission.AddCommand<MissionGetByIdCommand>("list");
+                mission.AddCommand<MissionDetailsWithHistory>("history");
                 
             });
 
