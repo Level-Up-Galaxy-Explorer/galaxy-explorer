@@ -16,6 +16,15 @@ public static class DomainErrros
             code: "Database.ConnectionFailed",
             description: $"Failed to connect to the database: {message}");
 
+        public static Error QueryFailure => Error.Failure(
+            code: "Database.QueryFailure",
+            description: "A database error occurred."
+            );
+
+        public static Error Timeout => Error.Failure(
+            code: "Database.Timeout",
+            description: "The database query timed out.");
+
         public static Error ConstraintViolation(string constraintName, string? details = null) => Error.Conflict(
            code: $"Database.Constraint.{constraintName}",
            description: $"A database constraint '{constraintName}' was violated.{(details != null ? $" Details: {details}" : "")}");
@@ -45,6 +54,7 @@ public static class DomainErrros
         public static Error Resource(string resourceName, object identifier) => Error.NotFound(
             code: $"{resourceName}.NotFound",
             description: $"{resourceName} with identifier [{identifier}] was not found.");
+            
     }
 
     public static class Conflict
@@ -74,6 +84,13 @@ public static class DomainErrros
         public static Error Unexpected(string? description = null) => Error.Unexpected(
            code: "General.Unexpected",
            description: description ?? "An unexpected error occurred.");
+    }
+
+    public static class Assignment
+    {
+        public static Error Conflict => Error.Conflict(
+            code: "Assignment.Conflict",
+            description: "This crew is already actively assigned to this mission.");
     }
 
 }

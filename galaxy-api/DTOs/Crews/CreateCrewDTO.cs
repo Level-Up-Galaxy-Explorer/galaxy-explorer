@@ -12,4 +12,6 @@ public class CreateCrewDto
     public bool IsAvailable { get; set; }
 
     public List<int> MemberUserIds { get; set; } = new List<int>();
+
+    
 }

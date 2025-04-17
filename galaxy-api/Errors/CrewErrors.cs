@@ -5,6 +5,14 @@ namespace galaxy_api.Errors;
 public static class CrewErrors
 {
 
+    public static Error NotAvailable => Error.Validation(
+            code: "Crew.NotAvailable",
+            description: "The specified crew is not currently available for assignment.");
+
+    public static Error NotFound => Error.NotFound(
+   code: "Crew.NotFound",
+   description: "The requested crew was not found.");
+
     public static Error CreationFailed => Error.Failure(
            code: "Crew.CreationFailed",
            description: "Failed to create the crew record in the database.");
