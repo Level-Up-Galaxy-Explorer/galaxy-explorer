@@ -73,6 +73,10 @@ public class CrewMissionHistoryCommand : BaseApiCommand<IdSettings>
 
             });
 
+            var inProgressMissions = 0;
+            var abortedMissions = 0;
+            var successfulMissions = 0;
+
 
             if (history != null)
             {
@@ -80,7 +84,7 @@ public class CrewMissionHistoryCommand : BaseApiCommand<IdSettings>
                 var grid = new Grid()
                 .AddColumn(new GridColumn().NoWrap().PadRight(4))
                 .AddColumn()
-                .AddRow("[b][grey]Crew Name[/][/]", $"{history.Name}")              
+                .AddRow("[b][grey]Crew Name[/][/]", $"{history.Name}")
                 .AddEmptyRow();
 
                 var simple = new Table()
@@ -94,10 +98,10 @@ public class CrewMissionHistoryCommand : BaseApiCommand<IdSettings>
 
                 if (history.Missions.Count > 0)
                 {
-                    
-                    var inProgressMissions = history.Missions.Count(m => m.OverallMissionStatusName == "Launched");
-                    var abortedMissions = history.Missions.Count(m => m.OverallMissionStatusName == "Aborted");
-                    var successfulMissions = history.Missions.Count(m => m.OverallMissionStatusName == "Completed");
+
+                    inProgressMissions = history.Missions.Count(m => m.OverallMissionStatusName == "Launched");
+                    abortedMissions = history.Missions.Count(m => m.OverallMissionStatusName == "Aborted");
+                    successfulMissions = history.Missions.Count(m => m.OverallMissionStatusName == "Completed");
 
 
                     history.Missions.ForEach(h => simple.AddRow(h.MissionName, h.MissionTypeName, h.DestinationPlanetName, h.AssignmentStatusName));
@@ -105,9 +109,7 @@ public class CrewMissionHistoryCommand : BaseApiCommand<IdSettings>
 
                     simple.Caption("[[ [blue]THE END[/] ]]");
 
-                    simple.Caption($"Total number of missions: {history.Missions.Count}");
-                    simple.Caption($"Number of successful missions:{successfulMissions}");
-                    simple.Caption($"Number of aborted or cancelled missions: {abortedMissions}");
+
                 }
                 else
                 {
@@ -118,6 +120,9 @@ public class CrewMissionHistoryCommand : BaseApiCommand<IdSettings>
                 grid.AddRow(simple);
 
                 AnsiConsole.Write(new Panel(grid).Header("Crew Information"));
+                AnsiConsole.MarkupLine($"Total number of missions: {history.Missions.Count}");
+                AnsiConsole.MarkupLine($"Number of successful missions:{successfulMissions}");
+                AnsiConsole.MarkupLine($"Number of aborted or cancelled missions: {abortedMissions}");
             }
 
 
