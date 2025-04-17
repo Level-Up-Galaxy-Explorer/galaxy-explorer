@@ -21,9 +21,7 @@ public class MissionUpdateCommand : Command<EmptyCommandSettings>
         AnsiConsole.MarkupLine("[blue]Update a mission[/]");
 
         var missionId = AnsiConsole.Ask<int>("Enter the [green]mission ID[/] to update:");
-
-        var existingMission = _missionService.GetMissionsAsync().GetAwaiter().GetResult()
-            .FirstOrDefault(m => m.Mission_Id == missionId);
+        var existingMission = _missionService.GetMissionByIdAsync(missionId).GetAwaiter().GetResult();
 
         if (existingMission == null)
         {
@@ -35,12 +33,12 @@ public class MissionUpdateCommand : Command<EmptyCommandSettings>
             new TextPrompt<string>("Enter the [green]new mission name[/] ([grey]leave blank to keep unchanged[/]):")
                 .AllowEmpty());
 
-        var missionTypeIdStr = AnsiConsole.Prompt(
-            new TextPrompt<string>("Enter the [green]new mission type ID[/] ([grey]leave blank to keep unchanged[/]):")
+        var missionType = AnsiConsole.Prompt(
+            new TextPrompt<string>("Enter the [green]new mission type[/] ([grey]leave blank to keep unchanged[/]):")
                 .AllowEmpty());
 
-        var planetIdStr = AnsiConsole.Prompt(
-            new TextPrompt<string>("Enter the [green]new destination planet ID[/] ([grey]leave blank to keep unchanged[/]):")
+        var planetType = AnsiConsole.Prompt(
+            new TextPrompt<string>("Enter the [green]new destination planet[/] ([grey]leave blank to keep unchanged[/]):")
                 .AllowEmpty());
 
         var launchDateStr = AnsiConsole.Prompt(
@@ -49,14 +47,15 @@ public class MissionUpdateCommand : Command<EmptyCommandSettings>
 
         var mission = new MissionDTO
         {
+            Mission_Id = missionId,
             Name = string.IsNullOrWhiteSpace(name) ? existingMission.Name : name,
-            Mission_Type_Id = int.TryParse(missionTypeIdStr, out var mtid) && mtid != 0 ? mtid : existingMission.Mission_Type_Id,
-            Destination_Planet_Id = int.TryParse(planetIdStr, out var pid) && pid != 0 ? pid : existingMission.Destination_Planet_Id,
-            Launch_Date = DateTime.TryParse(launchDateStr, out var dt) && dt != default ? dt : existingMission.Launch_Date,
-            Status_Id = existingMission.Status_Id,
+            Mission_Type = string.IsNullOrWhiteSpace(missionType) ? existingMission.Mission_Type : missionType,
+            Planet_Type = string.IsNullOrWhiteSpace(planetType) ? existingMission.Planet_Type : planetType,
+            Launch_Date = DateTime.TryParse(launchDateStr, out var dt) ? dt : existingMission.Launch_Date,
+            Status_Type = existingMission.Status_Type,
             Reward_Credit = existingMission.Reward_Credit,
             Feedback = existingMission.Feedback,
-            Created_By = existingMission.Created_By
+            Created_By_Name = existingMission.Created_By_Name
         };
 
         try

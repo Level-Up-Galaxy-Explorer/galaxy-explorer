@@ -11,10 +11,12 @@ namespace galaxy_api.Controllers
     public class GalaxyController : ControllerBase
     {
         private readonly IGalaxyService _galaxyService;
+        private readonly ILogger<GalaxyController> _logger;
 
-        public GalaxyController(IGalaxyService galaxyService)
+        public GalaxyController(IGalaxyService galaxyService, ILogger<GalaxyController> logger)
         {
             _galaxyService = galaxyService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -31,10 +33,19 @@ namespace galaxy_api.Controllers
             var galaxy = await _galaxyService.GetGalaxyByIdAsync(id);
             if (galaxy == null)
             {
+                _logger.LogWarning("Galaxy with ID {Id} not found", id);
                 return NotFound();
             }
 
+            _logger.LogInformation("Found galaxy: {@Galaxy}", galaxy);
             return Ok(galaxy);
+        }
+
+        [HttpGet("types")]
+        public async Task<ActionResult<IEnumerable<string>>> GetGalaxyTypes()
+        {
+            var types = await _galaxyService.GetGalaxyTypesAsync();
+            return Ok(types);
         }
 
         [HttpPost]

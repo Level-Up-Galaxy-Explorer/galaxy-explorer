@@ -19,7 +19,7 @@ namespace galaxy_api.Repositories
                 SELECT 
                     g.galaxy_id,
                     g.name,
-                    gt.name AS galaxy_type_name,
+                    gt.name as galaxy_type,
                     g.distance_from_earth,
                     g.description
                 FROM galaxy g
@@ -35,7 +35,7 @@ namespace galaxy_api.Repositories
                 SELECT 
                     g.galaxy_id,
                     g.name,
-                    gt.name AS galaxy_type_name,
+                    gt.name as galaxy_type,
                     g.distance_from_earth,
                     g.description
                 FROM galaxy g
@@ -49,12 +49,16 @@ namespace galaxy_api.Repositories
         public async Task AddGalaxyAsync(Galaxy galaxy)
         {
             const string query = @"
-                INSERT INTO galaxy (name, galaxy_type_id, distance_from_earth, description)
+                INSERT INTO galaxy (
+                    name, 
+                    galaxy_type_id, 
+                    distance_from_earth, 
+                    description)
                 VALUES (
-                @Name,
-                @Galaxy_Type_Id,
-                @DistanceFromEarth,
-                @Description)";
+                    @Name,
+                    (SELECT galaxy_type_id FROM galaxy_type WHERE name = @Galaxy_Type),
+                    @Distance_From_Earth,
+                    @Description)";
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.ExecuteAsync(query, galaxy);
@@ -65,23 +69,31 @@ namespace galaxy_api.Repositories
             const string query = @"
                 UPDATE galaxy
                 SET
-                name = @Name,
-                galaxy_type_id = Galaxy_Type_Id,
-                distance_from_earth = @DistanceFromEarth,
-                description = @Description
+                    name = @Name,
+                    galaxy_type_id = (SELECT galaxy_type_id FROM galaxy_type WHERE name = @Galaxy_Type),
+                    distance_from_earth = @Distance_From_Earth,
+                    description = @Description
                 WHERE galaxy_id = @Id";
 
             var parameters = new
             {
                 Id = id,
                 galaxy.Name,
-                galaxy.Galaxy_Type_Id,
+                galaxy.Galaxy_Type,
                 galaxy.Distance_From_Earth,
                 galaxy.Description
             };
 
             await using var conn = new NpgsqlConnection(_connectionString);
             await conn.ExecuteAsync(query, parameters);
+        }
+
+        public async Task<IEnumerable<string>> GetGalaxyTypesAsync()
+        {
+            const string query = "SELECT name FROM galaxy_type";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            return await conn.QueryAsync<string>(query);
         }
     }
 }

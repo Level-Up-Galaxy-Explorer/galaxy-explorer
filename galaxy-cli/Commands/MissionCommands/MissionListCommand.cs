@@ -28,24 +28,22 @@ public class MissionListCommand : Command<EmptyCommandSettings>
             foreach (var mission in missions)
             {
                 table.AddRow(
-                    mission.Name ?? "",
-                    mission.Mission_Type_Id.ToString(),
-                    mission.Status_Id.ToString(),
+                    mission.Name,
+                    mission.Mission_Type,
+                    mission.Status_Type,
                     mission.Launch_Date.ToString("yyyy-MM-dd"),
-                    mission.Destination_Planet_Id.ToString(),
-                    mission.Created_By.ToString(),
-                    string.IsNullOrWhiteSpace(mission.Reward_Credit) ? "[grey]N/A[/]" : mission.Reward_Credit ?? "",
-                    string.IsNullOrWhiteSpace(mission.Feedback) ? "[grey]N/A[/]" : mission.Feedback ?? ""
+                    mission.Planet_Type,
+                    mission.Created_By_Name,
+                    string.IsNullOrWhiteSpace(mission.Reward_Credit) ? "[grey]N/A[/]" : mission.Reward_Credit,
+                    string.IsNullOrWhiteSpace(mission.Feedback) ? "[grey]N/A[/]" : mission.Feedback
                 );
             }
-
             AnsiConsole.Write(table);
         }
         else
         {
             AnsiConsole.MarkupLine("[yellow]No missions found.[/]");
         }
-
         return 0;
     }
 }

@@ -21,8 +21,8 @@ public class MissionCreateCommand : Command<EmptyCommandSettings>
         AnsiConsole.MarkupLine("[blue]Create a new mission[/]");
 
         var name = AnsiConsole.Ask<string>("Enter the [green]mission name[/]:");
-        var missionTypeId = AnsiConsole.Ask<int>("Enter the [green]mission type ID[/]:");
-        var planetId = AnsiConsole.Ask<int>("Enter the [green]destination planet ID[/]:");
+        var missionType = AnsiConsole.Ask<string>("Enter the [green]mission type[/]:");
+        var planetType = AnsiConsole.Ask<string>("Enter the [green]destination planet[/]:");
         var launchDate = AnsiConsole.Prompt(
             new TextPrompt<DateTime>("Enter the [green]launch date[/] (yyyy-MM-dd):")
                 .Validate(date =>
@@ -32,18 +32,16 @@ public class MissionCreateCommand : Command<EmptyCommandSettings>
                         : ValidationResult.Error("[red]Invalid date[/]");
                 })
         );
-        var createdBy = AnsiConsole.Ask<int>("Enter the [green]creator ID[/]:");
+        var createdByName = AnsiConsole.Ask<string>("Enter the [green]creator name[/]:");
 
         var mission = new MissionDTO
         {
             Name = name,
-            Mission_Type_Id = missionTypeId,
+            Mission_Type = missionType,
+            Planet_Type = planetType,
             Launch_Date = launchDate,
-            Destination_Planet_Id = planetId,
-            Status_Id = 1,
-            Reward_Credit = "",
-            Feedback = "",
-            Created_By = createdBy
+            Status_Type = "Planned",
+            Created_By_Name = createdByName
         };
 
         try

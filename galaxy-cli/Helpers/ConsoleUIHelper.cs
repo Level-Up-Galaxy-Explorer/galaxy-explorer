@@ -1,6 +1,7 @@
 using galaxy_cli.DTO.Crews;
 using galaxy_cli.DTO;
 using Spectre.Console;
+using galaxy_cli.DTO.Galaxy;
 
 public static class ConsoleUiHelper
 {
@@ -36,9 +37,9 @@ public static class ConsoleUiHelper
         var grid = new Grid()
             .AddColumn(new GridColumn().NoWrap().PadRight(4))
             .AddColumn()
-            .AddRow("[b][grey]Galaxy Id[/][/]", $"{galaxy.Galaxy_Id}")
+            .AddRow("[b][grey]Galaxy Id[/][/]", $"{galaxy.Id}")
             .AddRow("[b][grey]Name[/][/]", $"{galaxy.Name}")
-            .AddRow("[b][grey]Type[/][/]", $"{galaxy.GalaxyTypeName}")
+            .AddRow("[b][grey]Type[/][/]", $"{galaxy.GalaxyType}")
             .AddRow("[b][grey]Distance From Earth[/][/]", $"{galaxy.Distance_From_Earth}")
             .AddRow("[b][grey]Description[/][/]", $"{galaxy.Description}");
 
