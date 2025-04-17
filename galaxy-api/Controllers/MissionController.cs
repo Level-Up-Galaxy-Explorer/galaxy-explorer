@@ -1,5 +1,7 @@
+using ErrorOr;
 using galaxy_api.Delegates;
 using galaxy_api.DTOs;
+using galaxy_api.DTOs.Missions;
 using galaxy_api.Helpers;
 using galaxy_api.Models;
 using galaxy_api.Services;
@@ -8,10 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace galaxy_api.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class MissionController : ControllerBase
+
+    public class MissionController : ApiController
     {
         private readonly IMissionService _missionService;
         private readonly FeedbackValidator _feedbackValidator;
@@ -20,7 +20,7 @@ namespace galaxy_api.Controllers
         public MissionController(IMissionService missionService)
         {
             _missionService = missionService;
-           _feedbackValidator = FeedbackValidation.IsValidFeedback;
+            _feedbackValidator = FeedbackValidation.IsValidFeedback;
 
         }
 
@@ -116,7 +116,7 @@ namespace galaxy_api.Controllers
 
             if (dto.Status_Id == 3)
             {
-                if (dto.Feedback is not {} feedback || !_feedbackValidator(dto.Feedback))
+                if (dto.Feedback is not { } feedback || !_feedbackValidator(dto.Feedback))
                 {
                     return BadRequest(new ApiResponse<string>
                     {
@@ -142,7 +142,7 @@ namespace galaxy_api.Controllers
             }
             else if (dto.Status_Id == 4)
             {
-                if (dto.Feedback is not {} feedback || !_feedbackValidator(dto.Feedback))
+                if (dto.Feedback is not { } feedback || !_feedbackValidator(dto.Feedback))
                 {
                     return BadRequest(new ApiResponse<string>
                     {
@@ -181,6 +181,33 @@ namespace galaxy_api.Controllers
                 Message = "Mission status report generated successfully",
                 Data = report
             });
+        }
+
+        [HttpGet("{id}/history")]
+        public async Task<IActionResult> GetMissionDetailsWithCrewHistory(int id)
+        {
+            ErrorOr<MissionDetailsWithCrewHistoryDTO> result = await _missionService.GetMissionDetailsWithCrewHistoryAsync(id);
+
+            return result.Match(
+                missionData => Ok(missionData),
+                errors => Problem(errors[0].Description)
+            );
+
+        }
+
+        [HttpPost("{id}/assign-crew")]
+        public async Task<IActionResult> AssignCrewToMission(int id, [FromBody] AssignCrewRequestDTO request)
+        {
+            if (id <= 0) return BadRequest("A valid Mission ID must be provided in the route.");
+            if (!ModelState.IsValid) return ValidationProblem(ModelState);
+
+            ErrorOr<Success> result = await _missionService.AssignCrewToMissionAsync(id, request.CrewId);
+
+
+            return result.Match(
+                success => NoContent(),
+                Problem
+            );
         }
     }
 }
