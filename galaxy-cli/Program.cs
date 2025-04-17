@@ -120,6 +120,8 @@ class Program
                 crew.AddCommand<CrewAssignCommand>("assign");
                 crew.AddCommand<CrewCreateCommand>("create");
                 crew.AddCommand<CrewFireCommand>("fire");
+                crew.AddCommand<CrewMissionHistoryCommand>("history");
+
             });
 
             config.AddBranch("missions", mission =>
@@ -132,6 +134,7 @@ class Program
                 mission.AddCommand<MissionUpdateStatusCommand>("update-status");
                 mission.AddCommand<MissionReportCommand>("report");
                 mission.AddCommand<MissionGetByIdCommand>("list");
+                
             });
 
             config.AddBranch("planets", mission =>

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using galaxy_api.DTOs.Crews;
 using galaxy_cli.DTO.Crews;
 using galaxy_cli.Services.Base;
 using Microsoft.Extensions.Logging;
@@ -32,6 +33,11 @@ public class CrewsService : BaseApiService, ICrewsService
     public async Task<CrewSummaryDTO?> GetCrewItemAsync(int id)
     {
         return await GetAndDeserializeAsync<CrewSummaryDTO>(id.ToString()); ;
+    }
+
+    public async Task<CrewMissionSummaryDTO> GetCrewMissionHistory(int id)
+    {
+        return await GetAndDeserializeAsync<CrewMissionSummaryDTO>($"{id}/history");
     }
 
     public async Task RemoveCrewMembers(int crewId, UpdateCrewMembersDto memberIds)
