@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Text;
 using Dapper;
 using ErrorOr;
 using galaxy_api.DTOs;
@@ -12,6 +13,12 @@ namespace galaxy_api.Repositories
     public class MissionRepository : IMissionRepository
     {
         private readonly string _connectionString;
+
+        private const int PlannedStatusId = 1;
+        private const int Active = 2;
+        private const int CompletedStatusId = 3;
+        private const int FailedStatusId = 4;
+        private const int AbortedStatusId = 5;
 
         public MissionRepository(IConfiguration configuration)
         {
@@ -423,6 +430,142 @@ namespace galaxy_api.Repositories
             }
             catch (Exception ex)
             {
+                return DomainErrros.Database.Unexpected(ex.Message);
+            }
+
+        }
+
+        public async Task<ErrorOr<Success>> UpdateMissionsStatusAsync(int missionId, int crewId, MissionStatusUpdateDto missions)
+        {
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+            using var transaction = conn.BeginTransaction();
+
+            bool assignmentIsEnded = false;
+            bool requiresMissionUpdate = false;
+            long targetMissionStatusId = 0;
+
+            try
+            {
+                const string statusCheckSql = "SELECT 1 FROM Status WHERE status_id = @StatusId LIMIT 1;";
+                var statusExists = await conn.ExecuteScalarAsync<int?>(statusCheckSql, new { StatusId = missions.Status_Id }, transaction);
+                if (!statusExists.HasValue)
+                {
+                    await transaction.RollbackAsync();
+                    return DomainErrros.Assignment.InvalidStatus;
+                }
+
+                const string assignmentCheckSql = @"
+                SELECT ended_at IS NOT NULL AS IsEnded
+                FROM Mission_Crew
+                WHERE mission_id = @MissionId AND crew_id = @CrewId
+                LIMIT 1 FOR UPDATE;";
+                var currentState = await conn.QuerySingleOrDefaultAsync<bool?>(assignmentCheckSql,
+                new { MissionId = missionId, CrewId = crewId }, transaction);
+
+                if (currentState == null)
+                {
+                    await transaction.RollbackAsync();
+                    return DomainErrros.Assignment.NotFound;
+                }
+
+                assignmentIsEnded = currentState.Value;
+                if (assignmentIsEnded)
+                {
+                    await transaction.RollbackAsync();
+                    return DomainErrros.Assignment.AlreadyEnded;
+                }
+
+
+                bool isTerminalStatus = missions.Status_Id == CompletedStatusId ||
+                                         missions.Status_Id == FailedStatusId ||
+                                         missions.Status_Id == AbortedStatusId;
+
+                var setClauses = new StringBuilder("SET mission_status_id = @NewStatusId");
+                var parameters = new DynamicParameters();
+                parameters.Add("NewStatusId", missions.Status_Id);
+                parameters.Add("MissionId", missionId);
+                parameters.Add("CrewId", crewId);
+
+                if (isTerminalStatus)
+                {
+                    setClauses.Append(", ended_at = NOW()");
+                    setClauses.Append(", feedback = @Feedback");
+                }
+                string updateAssignmentSql = $@"
+                UPDATE Mission_Crew
+                {setClauses.ToString()}
+                WHERE mission_id = @MissionId AND crew_id = @CrewId AND ended_at IS NULL;";
+
+                var rowsAffectedAssignment = await conn.ExecuteAsync(
+                    updateAssignmentSql,
+                    new { NewStatusId = missions.Status_Id, MissionId = missionId, CrewId = crewId, feedback = missions.Feedback },
+                    transaction
+                );
+
+                if (rowsAffectedAssignment != 1)
+                {
+                    await transaction.RollbackAsync();
+                    return DomainErrros.Database.Unexpected("");
+                }
+
+                if (missions.Status_Id == CompletedStatusId)
+                {
+                    requiresMissionUpdate = true;
+                    targetMissionStatusId = CompletedStatusId;
+
+                }
+                else if (missions.Status_Id == AbortedStatusId || missions.Status_Id == FailedStatusId)
+                {
+                    requiresMissionUpdate = true;
+                    targetMissionStatusId = PlannedStatusId;
+                }
+
+                if (requiresMissionUpdate)
+                {
+
+                    const string updateMissionSql = @"
+                         UPDATE Missions SET status_id = @NewStatusId
+                         WHERE mission_id = @MissionId";
+
+
+
+                    var rowsAffectedMission = await conn.ExecuteAsync(
+                        updateMissionSql,
+                        new
+                        {
+                            NewStatusId = targetMissionStatusId,
+                            MissionId = missionId,
+                        },
+                        transaction
+                    );
+
+                    if (rowsAffectedMission != 1)
+                    {
+                        await transaction.RollbackAsync();
+                        return DomainErrros.Database.Unexpected($"Failed to update Mission.");
+                    }
+                }
+
+                await transaction.CommitAsync();
+                return Result.Success;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.StackTrace);
+                Console.WriteLine(ex.InnerException);
+                Console.WriteLine(ex.ToString());
+                try { await transaction.RollbackAsync(); } catch (Exception) { }
+
+                if (ex is NpgsqlException npgEx)
+                {
+                    if (npgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation) return DomainErrros.Assignment.InvalidStatus;
+
+                    return DomainErrros.Database.QueryFailure;
+                }
+                if (ex is DbException) return DomainErrros.Database.QueryFailure;
+                if (ex is TimeoutException) return DomainErrros.Database.Timeout;
                 return DomainErrros.Database.Unexpected(ex.Message);
             }
 

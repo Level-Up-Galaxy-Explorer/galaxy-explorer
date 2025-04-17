@@ -91,6 +91,18 @@ public static class DomainErrros
         public static Error Conflict => Error.Conflict(
             code: "Assignment.Conflict",
             description: "This crew is already actively assigned to this mission.");
+
+        public static Error InvalidStatus => Error.Validation(
+            code: "Assignment.InvalidStatus",
+            description: "The provided assignment status ID is not valid.");
+
+        public static Error AlreadyEnded => Error.Validation(
+            code: "Assignment.AlreadyEnded",
+            description: "Cannot update the status of an assignment that has already ended.");
+
+        public static Error NotFound => Error.NotFound(
+            code: "Assignment.NotFound",
+            description: "The specified crew assignment for this mission was not found.");
     }
 
 }

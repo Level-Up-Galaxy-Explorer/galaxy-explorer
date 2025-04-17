@@ -209,5 +209,26 @@ namespace galaxy_api.Controllers
                 Problem
             );
         }
+
+        [HttpPut("{missionId}/crew/{crewId}/status")]
+        public async Task<IActionResult> UpdateMissionCrewStatus(int missionId, int crewId, [FromBody] MissionStatusUpdateDto request)
+        {
+            if (missionId <= 0 || crewId <= 0)
+            {
+                return BadRequest("Valid Mission ID and Crew ID must be provided in the route.");
+            }
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            ErrorOr<Success> result = await _missionService.UpdateMissionsStatusAsync(missionId, crewId, request);
+
+            return result.Match(
+                success => NoContent(),
+                errors => Problem(errors)
+            );
+        }
+
     }
 }
