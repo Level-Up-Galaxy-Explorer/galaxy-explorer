@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ErrorOr;
 using galaxy_api.Delegates;
 using galaxy_api.DTOs;
@@ -15,11 +16,13 @@ namespace galaxy_api.Controllers
     {
         private readonly IMissionService _missionService;
         private readonly FeedbackValidator _feedbackValidator;
+        private readonly IUserService _userService;
 
 
-        public MissionController(IMissionService missionService)
+        public MissionController(IMissionService missionService, IUserService userService)
         {
             _missionService = missionService;
+           _userService = userService;
             _feedbackValidator = FeedbackValidation.IsValidFeedback;
 
         }
@@ -61,7 +64,7 @@ namespace galaxy_api.Controllers
         [HttpPost]
         public async Task<ActionResult<ApiResponse<Missions>>> CreateMission([FromBody] Missions mission)
         {
-            mission.Status_Id = 1;
+            mission.Status_Type = "Planned";
             await _missionService.CreateMissionAsync(mission);
             return CreatedAtAction(nameof(GetMissionById), new { id = mission.Mission_Id }, new ApiResponse<Missions>
             {
@@ -97,7 +100,7 @@ namespace galaxy_api.Controllers
                 });
             }
 
-            if (dto.Status_Id == 3 && existingMission.Status_Id != 2)
+            if (dto.Status_Id == 3 && existingMission.Status_Type != "Launched")
             {
                 return BadRequest(new ApiResponse<string>
                 {

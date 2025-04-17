@@ -8,7 +8,6 @@ public class IdentifierSettings : CommandSettings
 {
     [CommandOption("-i|--id <IDENTIFIER>")]
     [Description("The unique ID or name of the target item (system, planet, crew, mission, etc.).")]
-    [CommandArgument(0, "[id]")]                                                     
     public int? Identifier { get; set; } 
 
     public override ValidationResult Validate()
