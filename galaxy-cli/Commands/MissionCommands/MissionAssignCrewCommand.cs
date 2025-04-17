@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
-[Description("Shows history of mission")]
+[Description("Assign mission to crew")]
 public class AssignMissionToCrew : BaseApiCommand<IdentifierSettings>
 {
     private readonly IMissionService _missionService;
