@@ -3,7 +3,9 @@ name: Build & Release Galaxy CLI
 on:
   push:
     tags:
-      - "v*" # we'll use tags like v1.0.0
+      - "v*" 
+  workflow_dispatch:    
+  # we'll use tags like v1.0.0
 
 permissions:
   contents: write
