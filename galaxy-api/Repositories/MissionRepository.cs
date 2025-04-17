@@ -1,5 +1,9 @@
+using System.Data.Common;
 using Dapper;
+using ErrorOr;
 using galaxy_api.DTOs;
+using galaxy_api.DTOs.Missions;
+using galaxy_api.Errors;
 using galaxy_api.Models;
 using Npgsql;
 
@@ -36,7 +40,7 @@ namespace galaxy_api.Repositories
             await using var conn = new NpgsqlConnection(_connectionString);
             return await conn.QueryAsync<Missions>(query);
         }
-        
+
         public async Task<Missions?> GetMissionByIdAsync(int id)
         {
             const string query = @"
@@ -113,7 +117,7 @@ namespace galaxy_api.Repositories
         public async Task UpdateMissionDetailsAsync(int id, Missions missions)
         {
             await using var conn = new NpgsqlConnection(_connectionString);
-            
+
             const string selectQuery = @"
                 SELECT 
                     m.mission_id,
@@ -287,9 +291,9 @@ namespace galaxy_api.Repositories
         {
             var filterClauses = new List<string>();
             if (!string.IsNullOrWhiteSpace(missionType))
-            filterClauses.Add("mt.name ILIKE @MissionType");
+                filterClauses.Add("mt.name ILIKE @MissionType");
             if (!string.IsNullOrWhiteSpace(status))
-            filterClauses.Add("s.name ILIKE @Status");
+                filterClauses.Add("s.name ILIKE @Status");
 
             var whereClause = filterClauses.Any()
             ? "WHERE " + string.Join(" AND ", filterClauses)
@@ -333,6 +337,227 @@ namespace galaxy_api.Repositories
 
             await using var conn = new NpgsqlConnection(_connectionString);
             return await conn.QueryAsync<MissionStatusReport>(query, parameters);
+        }
+
+        public async Task<ErrorOr<MissionDetailsWithCrewHistoryDTO>> GetMissionDetailsWithCrewHistoryAsync(int missionId)
+        {
+            const string query = @"
+            SELECT
+                m.name AS Name,
+                mt.name AS MissionTypeName,
+                m.launch_date AS LaunchDate,
+                p.name AS DestinationPlanetName,
+                m.reward_credit AS RewardCredit,
+                m.feedback AS Feedback,
+                s_mission.name AS OverallMissionStatusName,
+                u_creator.full_name AS CreatedByFullName 
+            FROM Missions m
+            JOIN Mission_Type mt ON m.mission_type_id = mt.mission_type_id
+            JOIN Planets p ON m.destination_planet_id = p.planet_id
+            JOIN Status s_mission ON m.status_id = s_mission.status_id
+            LEFT JOIN Users u_creator ON m.created_by = u_creator.user_id
+            WHERE m.mission_id = @MissionId;
+
+            SELECT
+                c.name AS CrewName,
+                c.is_available AS CrewIsAvailable,
+                mc.assigned_at AS AssignedAt,
+                mc.ended_at AS EndedAt,
+                s_crew.name AS AssignmentStatusName
+            FROM Mission_Crew mc
+            JOIN Crew c ON mc.crew_id = c.crew_id
+            JOIN Status s_crew ON mc.mission_status_id = s_crew.status_id
+            WHERE mc.mission_id = @MissionId
+            ORDER BY mc.assigned_at ASC;
+            ";
+
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+
+                using var multi = await conn.QueryMultipleAsync(query, new { MissionId = missionId });
+                var missionDetails = await multi.ReadFirstOrDefaultAsync<MissionDetailsWithCrewHistoryDTO>();
+
+                if (missionDetails == null)
+                {
+                    return DomainErrros.NotFound.Resource("Mission", new { });
+                }
+
+                var crewHistory = (await multi.ReadAsync<MissionCrewHistoryItemDTO>()).ToList();
+
+                missionDetails.CrewHistory = crewHistory;
+
+                return missionDetails;
+            }
+            catch (NpgsqlException ex)
+            {
+                return Error.Unexpected("CrewService.CreateFailed", $"An unexpected error occurred: {ex.Message}");
+            }
+            catch (DbException ex)
+            {
+                return Error.Unexpected("CrewService.CreateFailed", $"An unexpected error occurred: {ex.Message}");
+            }
+            catch (TimeoutException ex)
+            {
+                return Error.Unexpected("CrewService.CreateFailed", $"An unexpected error occurred: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                return DomainErrros.Database.Unexpected(ex.Message);
+            }
+        }
+
+        async Task<ErrorOr<int>> CrewPreChecks(int missionId, int crewId)
+        {
+
+            try
+            {
+                await using var conn = new NpgsqlConnection(_connectionString);
+
+                const string missionCheckSql = "SELECT 1 FROM Missions WHERE mission_id = @MissionId LIMIT 1;";
+                var missionExists = await conn.ExecuteScalarAsync<int?>(missionCheckSql, new { MissionId = missionId });
+                if (!missionExists.HasValue)
+                {
+                    return DomainErrros.NotFound.Resource("Mission", new { });
+                }
+
+                const string crewCheckSql = "SELECT is_available FROM Crew WHERE crew_id = @CrewId LIMIT 1;";
+                var crewAvailability = await conn.QuerySingleOrDefaultAsync<bool?>(crewCheckSql, new { CrewId = crewId });
+
+                if (crewAvailability == null)
+                {
+                    return CrewErrors.NotFound;
+                }
+
+                if (!crewAvailability.Value)
+                {
+                    return CrewErrors.NotAvailable;
+                }
+
+                const string activeAssignmentCheckSql = @"
+                SELECT 1 FROM Mission_Crew
+                WHERE mission_id = @MissionId AND crew_id = @CrewId AND ended_at IS NULL
+                LIMIT 1;";
+
+
+                var existingActive = await conn.ExecuteScalarAsync<int?>(activeAssignmentCheckSql, new { MissionId = missionId, CrewId = crewId });
+                if (existingActive.HasValue)
+                {
+                    return DomainErrros.Assignment.Conflict;
+                }
+
+                return 0;
+
+            }
+            catch (NpgsqlException)
+            {
+                return DomainErrros.Database.QueryFailure;
+            }
+            catch (
+                DbException)
+            {
+                return DomainErrros.Database.QueryFailure;
+            }
+            catch (TimeoutException)
+            {
+                return DomainErrros.Database.Timeout;
+            }
+            catch (Exception ex)
+            {
+                return DomainErrros.Database.Unexpected(ex.Message);
+            }
+        }
+
+        public async Task<ErrorOr<Success>> AssignCrewToMissionAsync(int missionId, int crewId)
+        {
+            var error = await CrewPreChecks(missionId, crewId);
+
+            if (error.IsError)
+            {
+                return error.Errors;
+            }
+
+            const string insertSql = @"
+            INSERT INTO Mission_Crew (mission_id, crew_id, assigned_at, ended_at, mission_status_id)
+            VALUES (@MissionId, @CrewId, NOW(), NULL, @InitialStatusId);
+            ";
+
+            await using var conn = new NpgsqlConnection(_connectionString);
+            await conn.OpenAsync();
+            using var transaction = conn.BeginTransaction();
+
+
+            try
+            {
+
+                var rowsAffected = await conn.ExecuteAsync(
+                    insertSql,
+                    new
+                    {
+                        MissionId = missionId,
+                        CrewId = crewId,
+                        InitialStatusId = 2
+                    },
+                    transaction
+                );
+
+                if (rowsAffected != 1)
+                {
+                    await transaction.RollbackAsync();
+                    return DomainErrros.Database.Unexpected("No changes were made");
+                }
+
+                const string updateMissionSql = @"
+                    UPDATE Missions
+                    SET status_id = @NewStatusId
+                    WHERE mission_id = @MissionId;
+                    ";
+
+                var rowsAffectedUpdate = await conn.ExecuteAsync(
+                   updateMissionSql,
+                   new
+                   {
+                       NewStatusId = 2,
+                       MissionId = missionId,
+                       ExpectedCurrentStatusId = 1
+                   },
+                   transaction
+                );
+
+                if (rowsAffectedUpdate != 1)
+                {
+                    await transaction.RollbackAsync();
+                    return DomainErrros.Database.Unexpected("Unexpected");
+                }
+
+                await transaction.CommitAsync();
+
+                return Result.Success;
+            }
+            catch (NpgsqlException npgEx)
+            {
+                await transaction.RollbackAsync();
+                if (npgEx.SqlState == PostgresErrorCodes.UniqueViolation) return DomainErrros.Assignment.Conflict;
+                if (npgEx.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+                {
+                    return DomainErrros.Database.ConstraintViolation("");
+                }
+
+                return DomainErrros.Database.QueryFailure;
+            }
+            catch (DbException)
+            {
+                return DomainErrros.Database.QueryFailure;
+            }
+            catch (TimeoutException)
+            {
+                return DomainErrros.Database.Timeout;
+            }
+            catch (Exception ex)
+            {
+                return DomainErrros.Database.Unexpected(ex.Message);
+            }
+
         }
     }
 }

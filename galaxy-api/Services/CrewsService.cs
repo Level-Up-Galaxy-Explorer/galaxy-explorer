@@ -35,6 +35,11 @@ class CrewsService : ICrewsService
         return await _repository.GetCrewAsync(crew_id);
     }
 
+    public async Task<ErrorOr<CrewMissionSummaryDTO>> GetCrewMissionHistoryAsync(int crewId)
+    {
+        return await _repository.GetCrewMissionHistoryAsync(crewId);
+    }
+
     public async Task<ErrorOr<Success>> RemoveCrewMembersAsync(int crewId, UpdateCrewMembersDto dto)
     {
         return await _repository.RemoveCrewMembersAsync(crewId, dto);

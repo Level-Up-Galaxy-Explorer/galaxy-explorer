@@ -1,4 +1,5 @@
 
+using galaxy_api.DTOs.Crews;
 using galaxy_cli.DTO.Crews;
 
 namespace galaxy_cli.Services;
@@ -12,4 +13,7 @@ public interface ICrewsService
     Task AddCrewMembers(int crewId, UpdateCrewMembersDto updateCrew);
 
     Task RemoveCrewMembers(int crewId, UpdateCrewMembersDto memberIds);
+
+    Task<CrewMissionSummaryDTO> GetCrewMissionHistory(int id);
+
 }

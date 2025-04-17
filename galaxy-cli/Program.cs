@@ -122,6 +122,8 @@ class Program
                 crew.AddCommand<CrewAssignCommand>("assign");
                 crew.AddCommand<CrewCreateCommand>("create");
                 crew.AddCommand<CrewFireCommand>("fire");
+                crew.AddCommand<CrewMissionHistoryCommand>("history");
+
             });
 
             config.AddBranch("missions", mission =>

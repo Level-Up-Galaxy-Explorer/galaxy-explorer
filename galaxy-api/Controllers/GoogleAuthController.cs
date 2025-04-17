@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using galaxy_api.Authentication;
 using galaxy_api.Models;
 using galaxy_api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,11 @@ namespace galaxy_api.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (request.Code == null || request.CodeVerifier == null || request.RedirectUri == null)
+            {
+                return BadRequest(ModelState);
+            }
+
             var idToken = await _googleAuthProvider.ExchangeCodeForIdTokenAsync(request.Code, request.CodeVerifier, request.RedirectUri);
 
             if (idToken == null)
@@ -38,13 +44,18 @@ namespace galaxy_api.Controllers
                 return BadRequest("Failed to exchange code or retrieve ID token from Google.");
             }
 
-            var principal = await _googleAuthProvider.ValidateGoogleIdTokenAsync(idToken);
+            var principal = _googleAuthProvider.ValidateGoogleIdToken(idToken);
             if (principal == null)
             {
                 return Unauthorized("Invalid Google ID token.");
             }
 
             string? userGoogleId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userGoogleId == null)
+            {
+                return Unauthorized("Invalid Google ID token.");
+            }
 
             Users? user = await _userService.GetUserByGoogleIdAsync(userGoogleId);
 
@@ -71,8 +82,6 @@ namespace galaxy_api.Controllers
 
         private string getJTW(ClaimsPrincipal principal, string idToken)
         {
-            // Create our own JWT with custom claims?
-            // Return google token for now.
             return idToken;
         }
     }

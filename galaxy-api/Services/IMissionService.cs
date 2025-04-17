@@ -1,4 +1,6 @@
+using ErrorOr;
 using galaxy_api.DTOs;
+using galaxy_api.DTOs.Missions;
 using galaxy_api.Models;
 
 namespace galaxy_api.Services
@@ -13,8 +15,8 @@ namespace galaxy_api.Services
         Task UpdateMissionStatusAsync(int id, Missions missions);
         Task RewardCreditMissionAsync(int id, Missions missions);
         Task<IEnumerable<MissionStatusReport>> GetMissionStatusReportAsync(string? missionType, string? status, string? groupBy);
-
-
+        Task<ErrorOr<MissionDetailsWithCrewHistoryDTO>> GetMissionDetailsWithCrewHistoryAsync(int missionId);
+        Task<ErrorOr<Success>> AssignCrewToMissionAsync(int missionId, int crewId);
 
     }
 }

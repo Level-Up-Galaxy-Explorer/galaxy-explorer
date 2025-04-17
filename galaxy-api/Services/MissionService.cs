@@ -1,4 +1,6 @@
+using ErrorOr;
 using galaxy_api.DTOs;
+using galaxy_api.DTOs.Missions;
 using galaxy_api.Models;
 using galaxy_api.Repositories;
 
@@ -32,7 +34,7 @@ namespace galaxy_api.Services
 
         public async Task UpdateMissionDetailsAsync(int id, Missions missions)
         {
-            await _repository.UpdateMissionDetailsAsync(id,missions);
+            await _repository.UpdateMissionDetailsAsync(id, missions);
         }
 
         public async Task ProvideMissionFeedbackAsync(int id, Missions missions)
@@ -61,5 +63,14 @@ namespace galaxy_api.Services
             };
         }
 
+        public async Task<ErrorOr<MissionDetailsWithCrewHistoryDTO>> GetMissionDetailsWithCrewHistoryAsync(int missionId)
+        {
+            return await _repository.GetMissionDetailsWithCrewHistoryAsync(missionId);
+        }
+
+        public async Task<ErrorOr<Success>> AssignCrewToMissionAsync(int missionId, int crewId)
+        {
+            return await _repository.AssignCrewToMissionAsync(missionId, crewId);
+        }
     }
 }
