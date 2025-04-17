@@ -64,7 +64,7 @@ CREATE TABLE Missions (
     status_id INT NOT NULL REFERENCES Status(status_id),
     reward_credit VARCHAR(64),
     feedback VARCHAR(255),
-    created_by VARCHAR(64) NOT NULL REFERENCES Users(user_id)
+    created_by INT NOT NULL REFERENCES Users(user_id)
 );
 
 CREATE TABLE Crew (

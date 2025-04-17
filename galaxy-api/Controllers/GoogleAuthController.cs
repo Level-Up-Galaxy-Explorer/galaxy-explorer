@@ -69,7 +69,7 @@ namespace galaxy_api.Controllers
             return Ok(new { token = getJTW(principal, idToken) });
         }
 
-        public string getJTW(ClaimsPrincipal principal, string idToken)
+        private string getJTW(ClaimsPrincipal principal, string idToken)
         {
             // Create our own JWT with custom claims?
             // Return google token for now.
