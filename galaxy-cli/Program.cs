@@ -106,6 +106,7 @@ class Program
         {
 
             config.AddCommand<LoginCommand>("login");
+            config.AddCommand<LogoutCommand>("logout");
             config.AddCommand<StatusCommand>("status");
 
             config.AddBranch("scan", scan =>
