@@ -39,6 +39,8 @@ public class CrewDetailCommand : BaseApiCommand<IdentifierSettings>
             AnsiConsole.Write(
             new Panel(grid)
                 .Header("Crew Information"));
+        } else {
+            
         }
 
         return 0;

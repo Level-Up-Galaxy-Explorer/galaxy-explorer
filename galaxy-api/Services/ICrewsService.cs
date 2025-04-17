@@ -17,4 +17,5 @@ public interface ICrewsService
     Task<ErrorOr<Success>> UpdateCrewDetailsAsync(int crewId, UpdateCrewDetailsDTO dto);
     Task<ErrorOr<Success>> AddCrewMembersAsync(int crewId, UpdateCrewMembersDto dto);
     Task<ErrorOr<Success>> RemoveCrewMembersAsync(int crewId, UpdateCrewMembersDto dto);
+    Task<ErrorOr<CrewMissionSummaryDTO>> GetCrewMissionHistoryAsync(int crewId);
 }

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using System.Text;
 using Dapper;
 using ErrorOr;
@@ -36,9 +37,6 @@ public class CrewsRepository : ICrewsRepositoty
         var crews = await CrewsTaskQueryAsync(query, new { Id = crew_id });
         return crews.FirstOrDefault();
     }
-
-
-
 
     private string GetCrewsSQL(bool getSingle = false)
     {
@@ -379,6 +377,80 @@ public class CrewsRepository : ICrewsRepositoty
             await transaction.RollbackAsync();
             Console.WriteLine($"UNEXPECTED ERROR: {ex}");
             return DomainErrros.General.Unexpected($"An unexpected error occurred while removing crew members: {ex.Message}");
+        }
+    }
+
+    public async Task<ErrorOr<CrewMissionSummaryDTO>> GetCrewMissionHistoryAsync(int crewId)
+    {
+        const string sql = @"
+        SELECT
+                c.crew_id AS CrewId,
+                c.name AS Name, 
+                c.is_available AS IsAvailable
+            FROM crew c
+            WHERE c.crew_id = @CrewId;
+
+        SELECT
+            m.mission_id AS MissionId,
+            m.name AS MissionName,
+            mt.name AS MissionTypeName,
+            m.launch_date AS LaunchDate,
+            p.name AS DestinationPlanetName,
+            m.reward_credit AS RewardCredit,
+            m.feedback AS Feedback,
+            s_mission.name AS OverallMissionStatusName,
+            mc.assigned_at AS AssignedAt,
+            mc.ended_at AS EndedAt,
+            s_crew.name AS AssignmentStatusName 
+	
+            FROM Mission_Crew mc
+            JOIN Missions m ON mc.mission_id = m.mission_id
+            JOIN Mission_Type mt ON m.mission_type_id = mt.mission_type_id
+            JOIN Planets p ON m.destination_planet_id = p.planet_id
+            JOIN Status s_crew ON mc.mission_status_id = s_crew.status_id 
+            JOIN Status s_mission ON m.status_id = s_mission.status_id
+            JOIN Crew c ON c.crew_id = mc.crew_id 
+            WHERE mc.crew_id = @CrewId
+            ORDER BY mc.assigned_at DESC;";
+        await using var conn = new NpgsqlConnection(_connectionString);
+
+        try
+        {
+            using (var multi = await conn.QueryMultipleAsync(sql, new { CrewId = crewId }))
+            {
+                var crewDetails = await multi.ReadFirstOrDefaultAsync<CrewMissionSummaryDTO>();
+
+                if (crewDetails == null)
+                {
+
+                    return DomainErrros.NotFound.Resource("CrewHistoryNotFound", new { });
+                }
+
+                var missionHistory = (await multi.ReadAsync<CrewMissionHistoryItemDTO>()).ToList();
+
+                crewDetails.Missions = missionHistory;
+
+
+                return crewDetails;
+            }
+
+
+        }
+        catch (NpgsqlException ex)
+        {
+            return Error.Unexpected("CrewService.CreateFailed", $"An unexpected error occurred: {ex.Message}");
+        }
+        catch (DbException ex)
+        {
+            return DomainErrros.Database.Unexpected(ex.Message, ex.SqlState);
+        }
+        catch (TimeoutException ex)
+        {
+            return Error.Unexpected("CrewService.CreateFailed", $"An unexpected error occurred: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return Error.Unexpected("CrewService.CreateFailed", $"An unexpected error occurred: {ex.Message}");
         }
     }
 }

@@ -3,7 +3,6 @@ using galaxy_api.DTOs;
 using galaxy_api.DTOs.Crews;
 using galaxy_api.Models;
 using galaxy_api.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace galaxy_api.Controllers;
@@ -37,6 +36,19 @@ public class CrewsController : ApiController
 
         return Ok(crew);
     }
+
+    [HttpGet("{id}/history")]
+    public async Task<IActionResult> GetCrewMissionHistory(int id)
+    {
+        
+        ErrorOr<CrewMissionSummaryDTO> crewResult = await _crewsService.GetCrewMissionHistoryAsync(id);
+                
+        return crewResult.Match(
+                crew => Ok(crew),
+                Problem
+            );
+    }
+
 
     [HttpPost]
     public async Task<IActionResult> CreateCrew([FromBody] CreateCrewDto crewDto)
